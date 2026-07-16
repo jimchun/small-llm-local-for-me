@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+backend/venv/
+venv/
+env/
+ENV/
+
+# Models and Data
+models/
+backend/data/
+*.db
+*.sqlite3
+
+# Logs
+backend/logs/
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test files (not needed in production)
+test_*.py
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Windows path artifacts
+"D:\\little-llm-local-for-me\\*"
+
+# Misc
+*.bak
+*.orig
+.remote.txt
+
+# Documentation images (large binary files)
+*.png
+*.jpg
+*.jpeg
+*.gif

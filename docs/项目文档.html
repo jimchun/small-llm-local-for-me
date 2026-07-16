@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>轻量化本地推理核 + 联网权威知识库 — 项目文档</title>
+<style>
+@page { size: A4; margin: 2cm 2.5cm; }
+body { font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif; font-size: 11pt; line-height: 1.8; color: #1a1a1a; background: #fff; max-width: 900px; margin: 0 auto; padding: 20px; }
+.cover { page: cover; text-align: center; padding: 80px 20px; page-break-after: always; }
+.cover h1 { font-size: 28pt; color: #1a1a1a; margin-bottom: 10px; }
+.cover .subtitle { font-size: 15pt; color: #555; margin-bottom: 60px; }
+.cover .meta { font-size: 11pt; color: #666; line-height: 2.2; }
+.cover .version { font-size: 12pt; color: #999; margin-top: 40px; }
+h1 { font-size: 20pt; border-bottom: 2px solid #1a1a1a; padding-bottom: 8px; margin-top: 40px; page-break-before: always; }
+h1:first-of-type { page-break-before: avoid; }
+h2 { font-size: 15pt; color: #333; margin-top: 28px; border-left: 4px solid #16a34a; padding-left: 12px; }
+h3 { font-size: 12pt; color: #444; margin-top: 18px; }
+table { width: 100%; border-collapse: collapse; font-size: 10pt; margin: 16px 0; }
+th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; vertical-align: top; }
+th { background: #f5f5f5; font-weight: 600; }
+tr:nth-child(even) { background: #fafafa; }
+code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 10pt; font-family: "Cascadia Code", "Consolas", monospace; }
+pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 6px; overflow-x: auto; font-size: 9.5pt; line-height: 1.5; }
+pre code { background: none; color: inherit; padding: 0; }
+.info-box { background: #eff6ff; border: 1px solid #93c5fd; border-left: 4px solid #2563eb; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+.warn-box { background: #fefce8; border: 1px solid #fde047; border-left: 4px solid #eab308; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+.danger-box { background: #fef2f2; border: 1px solid #fca5a5; border-left: 4px solid #ef4444; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+.success-box { background: #f0fdf4; border: 1px solid #86efac; border-left: 4px solid #22c55e; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+.box-title { font-weight: 700; margin-bottom: 4px; }
+ul, ol { padding-left: 1.5em; }
+li { margin: 4px 0; }
+hr { border: none; border-top: 1px solid #ddd; margin: 24px 0; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 9pt; font-weight: 600; }
+.badge-green { background: #dcfce7; color: #166534; }
+.badge-red { background: #fef2f2; color: #991b1b; }
+.badge-yellow { background: #fefce8; color: #854d0e; }
+.badge-blue { background: #eff6ff; color: #1e40af; }
+.badge-gray { background: #f3f4f6; color: #374151; }
+.badge-purple { background: #f3e8ff; color: #6b21a8; }
+.footer-note { font-size: 9pt; color: #999; text-align: center; margin-top: 40px; padding-top: 16px; border-top: 1px solid #eee; }
+</style>
+</head>
+<body>
+
+<!-- ==================== 封面 ==================== -->
+<div class="cover">
+  <h1>轻量化本地推理核 + 联网权威知识库</h1>
+  <div class="subtitle">极小本地推理模型 × 实时联网权威语料 — 零幻觉 AI 产品化方案</div>
+  <div class="meta">
+    核心模型：DeepSeek-R1-Distill-Qwen-1.5B<br>
+    硬件平台：Intel Core Ultra 5 125H / 32GB RAM / Intel Arc GPU<br>
+    架构理念：本地微型推理核 + 联网权威知识检索<br>
+    协议授权：Apache 2.0 完全免费商用
+  </div>
+  <div class="version">项目文档 · v19 · 创建日期 2026-07-02 · 最后更新 2026-07-16</div>
+</div>
+
+<!-- ==================== 1. 项目概述 ==================== -->
+<h1 id="ch1">1. 项目概述</h1>
+
+<h2>1.1 项目定位</h2>
+<p>本项目是一套<strong>轻量化本地 AI 产品化方案</strong>，采用「本地微型推理核 + 联网权威知识库」的混合架构，解决通用大模型的三大痛点：</p>
+<ul>
+  <li><strong>AI 幻觉</strong>：所有事实知识均来自权威数据源（维基百科、国家标准、政策库），模型仅负责逻辑推理，不生成编造事实</li>
+  <li><strong>知识过期</strong>：知识库实时联网更新，无知识截止日期限制</li>
+  <li><strong>部署门槛高</strong>：消费级笔记本（8GB 内存）即可运行，无需高端显卡</li>
+</ul>
+
+<h2>1.2 架构核心理念</h2>
+<pre>
+用户提问 → 小模型判断「是否需要查资料」
+         → 生成检索关键词/查询语句
+         → 联网拉取权威原文
+         → 小模型基于新鲜资料做推理、总结、作答
+</pre>
+
+<div class="success-box">
+  <div class="box-title">✅ 架构优势</div>
+  <ul>
+    <li>本地模型尺寸极小（1.5B），硬件门槛极低，几百 MB 即可运行</li>
+    <li>知识永久新鲜，无静态幻觉，联网实时查询权威源</li>
+    <li>省去预训练/微调注入知识的巨大成本，知识库独立维护</li>
+    <li>本地推理核无需存储海量知识向量，存储压力小</li>
+  </ul>
+</div>
+
+<h2>1.3 与 AGI 的关系</h2>
+<div class="warn-box">
+  <div class="box-title">⚠️ 架构定位：工具增强型窄智能</div>
+  <p>本架构属于成熟轻量化智能落地路线，<strong>不等于完整 AGI</strong>。核心短板：</p>
+  <ul>
+    <li>断网后完全丧失事实问答能力，基础常识也需要联网查询</li>
+    <li>无法沉淀隐性知识，高频问题重复检索，不会自主记忆简化思考</li>
+    <li>极小模型逻辑容量有限，长链条复杂推理存在性能上限</li>
+    <li>仅被动响应用户问题，无自主探索、主动验证猜想的智能闭环</li>
+  </ul>
+</div>
+
+<!-- ==================== 2. 硬件与性能 ==================== -->
+<h1 id="ch2">2. 硬件环境与性能测算</h1>
+
+<h2>2.1 目标硬件配置</h2>
+<table>
+<tr><th>组件</th><th>规格</th><th>推理角色</th></tr>
+<tr><td>CPU</td><td>Intel Core Ultra 5 125H (18核, 3.6GHz)</td><td>纯 CPU 推理主力</td></tr>
+<tr><td>RAM</td><td><strong>32GB LPDDR5x 7500MHz</strong></td><td>模型+知识库+浏览器共享</td></tr>
+<tr><td>GPU</td><td>Intel Arc (112 EU Xe-LPG)</td><td>核显加速推理</td></tr>
+<tr><td>NPU</td><td>Intel NPU 3720 (~11 TOPS)</td><td>暂不推荐（适配差）</td></tr>
+</table>
+
+<h2>2.2 推理速度实测预估</h2>
+<p>基于 DeepSeek-R1-Distill-Qwen-1.5B <strong>Q4_K_M 量化</strong>：</p>
+<table>
+<tr><th>运行模式</th><th>生成速度</th><th>首 Token 延迟</th><th>适用场景</th></tr>
+<tr>
+  <td><span class="badge badge-gray">纯 CPU</span></td>
+  <td><strong>45 ~ 60 t/s</strong></td>
+  <td>0.3 ~ 0.5s</td>
+  <td>默认模式，无需额外配置</td>
+</tr>
+<tr>
+  <td><span class="badge badge-blue">Arc 核显加速</span></td>
+  <td><strong>70 ~ 90 t/s</strong></td>
+  <td>0.2 ~ 0.4s</td>
+  <td>需 IPEX/llama.cpp GPU 层卸载</td>
+</tr>
+<tr>
+  <td><span class="badge badge-green">NPU</span></td>
+  <td colspan="2">不推荐（框架适配差，速度低于 CPU）</td>
+  <td>—</td>
+</tr>
+</table>
+
+<div class="info-box">
+  <div class="box-title">💡 实际体验</div>
+  <p>人类阅读速度仅 <strong>5~8 t/s</strong>，本机纯 CPU 输出速度远超阅读速度，全程流畅无等待感。32GB 内存完全冗余，模型+系统+检索工具总占用不超过 8GB。</p>
+</div>
+
+<h2>2.3 影响速度的关键变量</h2>
+<table>
+<tr><th>因素</th><th>影响</th><th>建议</th></tr>
+<tr><td>量化精度</td><td>Q8_0 速度降 20%；Q2_K 提速 15% 但推理质量下降</td><td>Q4_K_M 为最佳平衡点</td></tr>
+<tr><td>电源模式</td><td>省电模式速度降 30%</td><td>插电 + 性能模式达速度上限</td></tr>
+<tr><td>上下文长度</td><td>长文本增加首 Token 延迟，持续输出速度不变</td><td>联网检索场景影响可控</td></tr>
+</table>
+
+<!-- ==================== 3. 核心模型选型 ==================== -->
+<h1 id="ch3">3. 核心模型选型</h1>
+
+<h2>3.1 本地推理核（两级梯队）</h2>
+<table>
+<tr><th>模型</th><th>参数</th><th>量化大小</th><th>定位</th><th>特点</th></tr>
+<tr>
+  <td><strong>DeepSeek-R1-Distill-1.5B</strong></td>
+  <td>1.5B</td>
+  <td>~1GB (Q4)</td>
+  <td><span class="badge badge-green">✅ 本项目首选</span></td>
+  <td>强思维链 CoT，多源资料交叉对比，Apache 2.0</td>
+</tr>
+<tr>
+  <td>MiniCPM5-1B</td>
+  <td>1B</td>
+  <td>~0.5GB (INT4)</td>
+  <td>国产首选替代</td>
+  <td>原生工具调用，128K 上下文，8GB 内存可跑</td>
+</tr>
+<tr>
+  <td>Qwen2.5-0.5B</td>
+  <td>0.5B</td>
+  <td>~400MB</td>
+  <td>极致轻量</td>
+  <td>最小体积中文推理，免费商用</td>
+</tr>
+<tr>
+  <td>Needle</td>
+  <td>26M</td>
+  <td>~60MB</td>
+  <td>纯调度层</td>
+  <td>仅输出检索指令，需搭配第二层模型</td>
+</tr>
+</table>
+
+<h2>3.2 落地组合方案</h2>
+<div class="info-box">
+  <div class="box-title">方案 A：单模型一体化（推荐新手）</div>
+  <p>仅使用 <strong>DeepSeek-R1-Distill-1.5B</strong>，完整处理：提问 → 检索判断 → 联网拉取 → 推理总结全流程。Ollama 一键部署，代码逻辑简单。</p>
+</div>
+<div class="info-box">
+  <div class="box-title">方案 B：双层分离架构（极致省资源）</div>
+  <ul>
+    <li><strong>第一层</strong>：Needle 26M（常驻后台）— 判断是否联网、生成检索关键词</li>
+    <li><strong>第二层</strong>：MiniCPM5-1B（按需加载）— 接收原文做逻辑梳理、交叉验证、输出回答</li>
+  </ul>
+  <p>适合嵌入式、手机端低功耗场景。</p>
+</div>
+
+<!-- ==================== 4. 知识数据源 ==================== -->
+<h1 id="ch4">4. 知识数据源（全部开源免费）</h1>
+
+<h2>4.1 中文通用知识库</h2>
+<table>
+<tr><th>数据源</th><th>授权</th><th>特点</th><th>用法</th></tr>
+<tr>
+  <td><strong>中文维基百科 Dump</strong></td>
+  <td>CC BY-SA 4.0</td>
+  <td>全领域百科词条，事实知识干净</td>
+  <td>wikiextractor 解析 → BGE-small-zh 向量化 → Chroma 存储</td>
+</tr>
+<tr>
+  <td>百度百科开放子集</td>
+  <td>Apache 2.0</td>
+  <td>国内生活化常识丰富</td>
+  <td>HuggingFace / OpenI 公开分片</td>
+</tr>
+<tr>
+  <td>书生·万卷</td>
+  <td>开源免费商用</td>
+  <td>海量清洗完成中文通用语料</td>
+  <td>RAG 知识库 + 小模型预训练</td>
+</tr>
+<tr>
+  <td>CLUECorpus</td>
+  <td>Apache 2.0</td>
+  <td>新闻、百科、问答混合，体积小</td>
+  <td>低配设备可完整加载</td>
+</tr>
+<tr>
+  <td>Fineweb-Edu-Chinese V2.3</td>
+  <td>开源</td>
+  <td>143 万教育类 QA 对</td>
+  <td>问答检索 / 微调增强</td>
+</tr>
+</table>
+
+<h2>4.2 英文全球知识库</h2>
+<table>
+<tr><th>数据源</th><th>说明</th></tr>
+<tr><td>English Wikipedia Dump</td><td>全球最全开放事实知识库，CC 授权</td></tr>
+<tr><td>OpenCosmos Knowledge</td><td>专为 LLM RAG 设计，结构化，自带检索标签</td></tr>
+<tr><td>Common Pile</td><td>超大开放许可通用混合语料</td></tr>
+</table>
+
+<h2>4.3 本地极简调用架构（8GB 内存可跑）</h2>
+<pre>
+┌─────────────┐     ┌──────────────────┐     ┌─────────────┐
+│  用户提问    │────→│ 1.5B 推理核      │────→│ 生成检索词   │
+└─────────────┘     │ (DeepSeek-R1)    │     └──────┬──────┘
+                    └──────────────────┘            │
+                                                    ▼
+┌─────────────┐     ┌──────────────────┐     ┌─────────────┐
+│  最终回答    │←────│ 推理核整合输出    │←────│ 知识片段注入  │
+└─────────────┘     └──────────────────┘     └─────────────┘
+                                                   │
+                              ┌─────────────────────┤
+                              ▼                     ▼
+                     ┌─────────────┐     ┌──────────────────┐
+                     │ ChromaDB    │     │ 联网权威知识库    │
+                     │ 本地向量库   │     │ 维基/政策/标准    │
+                     └─────────────┘     └──────────────────┘
+</pre>
+
+<div class="info-box">
+  <div class="box-title">🔧 技术栈选型</div>
+  <ul>
+    <li><strong>嵌入模型</strong>：BGE-small-zh / gte-base-zh（CPU 可运行）</li>
+    <li><strong>向量存储</strong>：ChromaDB 嵌入式数据库（无需独立服务）</li>
+    <li><strong>调度框架</strong>：LangChain / LlamaIndex / AnythingLLM（零代码可视化）</li>
+  </ul>
+</div>
+
+<!-- ==================== 5. Token 消耗说明 ==================== -->
+<h1 id="ch5">5. Token 消耗与成本分析</h1>
+
+<div class="warn-box">
+  <div class="box-title">⚠️ 不存在完全免 Token，只是消耗结构转移</div>
+  <ul>
+    <li><strong>本地模型持续消耗</strong>：问题解析、检索词生成、网页文本解析、多轮对话全部产生 Token</li>
+    <li><strong>新增检索 Query Token</strong>：每次生成搜索词占用 Token</li>
+    <li><strong>权威知识库长文本 Token</strong>：网页/百科原文篇幅大，总 Token 可能高于内置知识模型</li>
+    <li><strong>隐性成本</strong>：在线知识库接口限流、网络延迟</li>
+  </ul>
+</div>
+
+<table>
+<tr><th>场景</th><th>Token 结构</th><th>对比</th></tr>
+<tr><td>大模型内置知识回答</td><td>仅模型推理 Token</td><td>回答精简，Token 少</td></tr>
+<tr><td>本架构联网检索回答</td><td>检索词 + 原文 + 推理 Token</td><td>总 Token 可能更高，但事实准确</td></tr>
+</table>
+
+<!-- ==================== 6. 商业化方案 ==================== -->
+<h1 id="ch6">6. 商业化落地方案</h1>
+
+<h2>6.1 合规基础</h2>
+<div class="success-box">
+  <div class="box-title">✅ 授权无风险</div>
+  <p>DeepSeek-R1-Distill-Qwen-1.5B 采用 <strong>Apache 2.0</strong> 协议：完全免费商用，无用户量门槛，可闭源二次开发，底层无授权成本。</p>
+</div>
+
+<h2>6.2 五大盈利路线</h2>
+<table>
+<tr><th>#</th><th>路线</th><th>目标客群</th><th>定价参考</th><th>特点</th></tr>
+<tr>
+  <td>1</td>
+  <td><strong>轻资产工具包</strong></td>
+  <td>技术爱好者、学生、自媒体</td>
+  <td>99元/永久授权；技术支持 299元/次</td>
+  <td>0 成本启动，GitHub 引流 + 闲鱼售卖</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><strong>To C 桌面客户端</strong></td>
+  <td>论文学生、公考/法考、科普创作者</td>
+  <td>免费版 20次/日；买断 49元；月会员 9.9元</td>
+  <td>零幻觉 + 引用溯源 + 隐私保护</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><strong>To B 私有化部署</strong></td>
+  <td>基层政务、律所/会计、中小工厂</td>
+  <td>标准版 19,800元/年；定制版 50,000元起</td>
+  <td>高客单价，渠道分成 30-40%</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><strong>垂直行业 SaaS</strong></td>
+  <td>街道社区、制造业车间</td>
+  <td>政务 3,000元/站/年；制造 5,000~10,000元/车间/年</td>
+  <td>高壁垒高复购，政策自动同步</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><strong>开发者 API</strong></td>
+  <td>小程序、智能客服、教育应用</td>
+  <td>0.005元/次；包月 99元</td>
+  <td>比通用大模型 API 便宜 90%+</td>
+</tr>
+</table>
+
+<h2>6.3 90 天执行路径</h2>
+<table>
+<tr><th>阶段</th><th>时间</th><th>核心任务</th><th>目标</th></tr>
+<tr>
+  <td><span class="badge badge-green">验证期</span></td>
+  <td>第 1-30 天</td>
+  <td>Ollama + 开源框架打包工具包；全网发布技术内容引流</td>
+  <td>卖出 50-100 份，收集付费反馈</td>
+</tr>
+<tr>
+  <td><span class="badge badge-blue">打磨期</span></td>
+  <td>第 31-60 天</td>
+  <td>PyQt/Electron 开发 GUI；对接 3-5 类核心权威数据源</td>
+  <td>标准化 MVP 产品，200+ 付费用户</td>
+</tr>
+<tr>
+  <td><span class="badge badge-purple">拓展期</span></td>
+  <td>第 61-90 天</td>
+  <td>免费/低价试点 1-2 家本地企业；打磨报价交付流程</td>
+  <td>签约 3-5 家 B 端付费客户</td>
+</tr>
+</table>
+
+<h2>6.4 核心竞争壁垒</h2>
+<ol>
+  <li><strong>数据源工程壁垒</strong>：权威源结构化清洗、可信度分级、实时同步，检索准确率比通用检索高 30%+</li>
+  <li><strong>小模型定向优化</strong>：针对检索增强、信息整合、引用输出场景微调 1.5B 推理核</li>
+  <li><strong>行业 Know-How 壁垒</strong>：垂直行业专属数据源、业务流程模板、落地案例，新入局者短期无法复刻</li>
+</ol>
+
+<!-- ==================== 7. 合规与风险 ==================== -->
+<h1 id="ch7">7. 合规与风险管控</h1>
+
+<table>
+<tr><th>维度</th><th>策略</th><th>注意事项</th></tr>
+<tr>
+  <td>模型授权</td>
+  <td>选用 Qwen 基底 DeepSeek-R1-Distill-1.5B（Apache 2.0）</td>
+  <td>规避 Llama 系列协议限制</td>
+</tr>
+<tr>
+  <td>数据源版权</td>
+  <td>仅使用 CC0/CC BY / 政府公开 / 国家标准等可商用资源</td>
+  <td>禁止爬取版权受限商业网站；B 端对接客户自有文档</td>
+</tr>
+<tr>
+  <td>内容合规</td>
+  <td>面向公众客户端内置内容审核逻辑</td>
+  <td>过滤敏感、违规问答</td>
+</tr>
+<tr>
+  <td>数据隐私</td>
+  <td>明确公示数据全部存储本地，不上传第三方</td>
+  <td>符合国内数据安全法规</td>
+</tr>
+</table>
+
+<!-- ==================== 8. 优化方向 ==================== -->
+<h1 id="ch8">8. 架构优化方向</h1>
+
+<h2>8.1 弥补 AGI 短板</h2>
+<div class="info-box">
+  <div class="box-title">🔧 两层缓存方案</div>
+  <ol>
+    <li><strong>本地短期记忆缓存</strong>：高频查询的常识本地轻量化向量缓存，断网时基础问题可自主回答</li>
+    <li><strong>隐性知识蒸馏沉淀</strong>：定期将高频检索到的通用常识少量微调注入小模型，逐步内化基础知识，减少联网依赖</li>
+  </ol>
+</div>
+
+<h2>8.2 工程优化</h2>
+<ul>
+  <li>小模型易生成冗余检索词 → 加规则过滤减少联网开销</li>
+  <li>断网丧失事实问答 → 增加本地极简常识缓存兜底</li>
+  <li>NPU 适配差 → 当前聚焦 CPU + 核显加速方案</li>
+</ul>
+
+<!-- ==================== 9. 附录 ==================== -->
+<h1 id="ch9">9. 附录</h1>
+
+<h2>9.1 快速选型参考</h2>
+<table>
+<tr><th>场景</th><th>推荐方案</th></tr>
+<tr><td>Windows 中文通用问答</td><td>DeepSeek-R1-Distill-1.5B + 中文维基 + ChromaDB</td></tr>
+<tr><td>手机/嵌入式极致轻量</td><td>Needle 26M + MiniCPM5-1B 双层组合</td></tr>
+<tr><td>低配轻薄本最小体积</td><td>Qwen2.5-0.5B</td></tr>
+<tr><td>英文维基/海外知识</td><td>Llama 3.2 1B / LFM2.5-1.2B-Thinking</td></tr>
+<tr><td>复杂多源交叉验证</td><td>DeepSeek-R1-Distill-1.5B（强 CoT）</td></tr>
+</table>
+
+<h2>9.2 零代码落地工具</h2>
+<ul>
+  <li><strong>AnythingLLM + Ollama</strong>：一键导入语料自动分块向量化，可视化管理</li>
+  <li><strong>LlamaIndex WebUI</strong>：上传本地语料，自动构建 RAG 服务</li>
+</ul>
+
+<h2>9.3 术语表</h2>
+<table>
+<tr><th>术语</th><th>全称</th><th>说明</th></tr>
+<tr><td>RAG</td><td>Retrieval-Augmented Generation</td><td>检索增强生成，从外部知识库检索信息辅助模型生成</td></tr>
+<tr><td>CoT</td><td>Chain of Thought</td><td>思维链推理，逐步推导的推理方式</td></tr>
+<tr><td>TTFT</td><td>Time To First Token</td><td>首 Token 延迟，用户发出请求到收到第一个字的时间</td></tr>
+<tr><td>INT4/Q4</td><td>4-bit Quantization</td><td>模型量化格式，大幅减小体积和内存占用</td></tr>
+<tr><td>UMA</td><td>Unified Memory Architecture</td><td>CPU/GPU/NPU 共享系统内存架构</td></tr>
+</table>
+
+<!-- ==================== 版本历史 ==================== -->
+<h1>版本历史</h1>
+<table>
+<tr><th>版本</th><th>日期</th><th>变更内容</th></tr>
+<tr><td>v19</td><td>2026-07-16</td><td>
+  <ul>
+    <li><strong>项目架构优化</strong>：
+      <ul>
+        <li>重新整理项目目录结构：docs/（文档）、notes/（笔记资料）、scripts/（脚本）</li>
+        <li>更新 .gitignore，排除不需要同步的大文件：venv/、models/、logs/、data/、test_*.py</li>
+        <li>清理 Windows 路径残留文件（D:\little-llm-local-for-me\*）</li>
+        <li>移除不必要跟踪的测试脚本（test_api.py、test_imports.py 等）</li>
+        <li>优化 Git 仓库体积，仅保留必要源代码和文档</li>
+      </ul>
+    </li>
+    <li><strong>同步策略</strong>：仅同步源代码、配置文件、文档到远程仓库，排除 5GB+ 的 venv 和 2GB+ 的模型文件</li>
+  </ul>
+</td></tr>
+<tr><td>v18</td><td>2026-07-05</td><td>
+  <ul>
+    <li><strong>三级向量库架构重构</strong>：
+      <ul>
+        <li>L1 热缓存（l1_hot_cache）：最多1000条，LRU淘汰，毫秒级响应</li>
+        <li>L2 主存储（l2_vector_store）：最多10000条，用户文档+知识缓存</li>
+        <li>L3 归档层：预留接口，暂未实现</li>
+        <li>查询流程：先查L1→再查L2→合并去重→按距离排序返回</li>
+        <li>自动提升机制：L2中访问≥3次的文档自动提升到L1热缓存</li>
+        <li>元数据持久化：访问次数、最后访问时间、创建时间</li>
+      </ul>
+    </li>
+    <li><strong>修复BUG</strong>：
+      <ul>
+        <li>修复 POST /api/folder/scan 返回404的问题（路由注册位置错误）</li>
+        <li>修复 LocalVectorStoreSource 初始化错误（传入函数而非对象实例）</li>
+        <li>修复意图分类404错误（Ollama模型未加载）</li>
+      </ul>
+    </li>
+    <li><strong>新增API端点</strong>：
+      <ul>
+        <li><code>GET /api/vector/stats</code> - 向量库各层统计信息（文档数/命中率/容量）</li>
+        <li><code>POST /api/vector/auto_promote</code> - 手动触发高频文档自动提升</li>
+        <li><code>GET /api/stats</code> - 增强统计信息，包含向量库各层数据</li>
+      </ul>
+    </li>
+    <li><strong>架构设计文档</strong>：
+      <ul>
+        <li>新增三级向量库架构设计方案（分层存储、数据管道、性能优化、监控维护）</li>
+      </ul>
+    </li>
+  </ul>
+</td></tr>
+<tr><td>v16</td><td>2026-07-04</td><td>
+  <ul>
+    <li><strong>智能文件夹监控系统</strong>：自动长期监控指定文件夹，定时扫描并理解文档</li>
+    <li>支持添加/移除多个监控文件夹，可配置扫描间隔（默认300秒）</li>
+    <li>使用本地 DeepSeek-R1 模型理解文档内容，提取摘要和关键词</li>
+    <li>智能检测文件变更（MD5哈希），仅处理修改过的文件</li>
+    <li>自动向量化处理后的文档，增量更新向量数据库</li>
+    <li>后台线程自动运行，服务重启后自动恢复监控</li>
+    <li>新增 8 个监控 API 端点（状态/添加/移除/间隔/启用/禁用/立即扫描/文件列表）</li>
+  </ul>
+</td></tr>
+<tr><td>v15</td><td>2026-07-04</td><td>
+  <ul>
+    <li><strong>修复启动BUG</strong>：main.py 中 LOG_LEVEL 未定义导致启动失败</li>
+    <li><strong>修复端口配置</strong>：统一使用 config.py 中的 API_PORT（9820），移除 main.py 中的硬编码端口</li>
+    <li><strong>完善百度百科搜索</strong>：使用 Wikipedia API 实现完整的百度百科搜索功能（替代原先的示意代码）</li>
+    <li><strong>新增学习缓存系统</strong>：实现高频查询自动沉淀，减少重复联网检索（learning_cache.py）</li>
+    <li><strong>任务状态梳理</strong>：完成待开发任务清单，明确高/中/低优先级</li>
+  </ul>
+</td></tr>
+<tr><td>v14</td><td>2026-07-03</td><td>
+  <ul>
+    <li><strong>文件夹导入本地向量库</strong>：支持用户通过 GUI 选择本地文件夹，自动扫描并构建向量库</li>
+  </ul>
+</td></tr>
+<tr><td>v13</td><td>2026-07-03</td><td>
+  <ul>
+    <li>补充本地向量库使用说明，记录存储格式和导入方式</li>
+  </ul>
+</td></tr>
+<tr><td>v12</td><td>2026-07-03</td><td>
+  <ul>
+    <li>修复启动错误，完善 Prompt 系统</li>
+  </ul>
+</td></tr>
+<tr><td>v11</td><td>2026-07-03</td><td>
+  <ul>
+    <li>多知识源系统、强制引用、用户画像、常识缓存功能完整</li>
+  </ul>
+</td></tr>
+<tr><td>v1.0</td><td>2026-07-02</td><td>
+  <ul>
+    <li>初始版本：FastAPI + ChromaDB + Ollama 基础架构</li>
+  </ul>
+</td></tr>
+</table>
+  <ul>
+    <li><strong>核心功能优化（基于豆包优化建议）</strong>：
+      <ul>
+        <li><strong>多知识源系统</strong>：支持维基百科、百度百科、本地向量库等多源检索，自动权重分配（Wikipedia 0.9 / 本地向量库 0.8 / 百度百科 0.7）</li>
+        <li><strong>强制引用机制</strong>：通过 Prompt 工程强制 LLM 标注信息来源，无资料时明确兜底「暂无权威资料支持该问题，无法回答」</li>
+        <li><strong>常识缓存</strong>：100+ 条本地常识缓存（地理/数学/物理/化学/生物/历史/文化/计算机），优先匹配快速响应</li>
+        <li><strong>用户画像系统</strong>：支持静态画像（姓名/职业/背景/偏好）+ 动态记忆（自动沉淀对话中的关键信息）</li>
+        <li><strong>统一日志系统</strong>：控制台彩色输出 + 按日期滚动文件日志，支持 DEBUG/INFO/WARNING/ERROR/CRITICAL 分级</li>
+      </ul>
+    </li>
+    <li><strong>新增 API 端点</strong>：
+      <ul>
+        <li><code>POST /api/search</code> - 多知识源统一搜索（含权重排序）</li>
+        <li><code>GET /api/profile</code> - 获取用户画像</li>
+        <li><code>POST /api/profile/update</code> - 更新用户画像</li>
+        <li><code>POST /api/memory/add</code> - 添加动态记忆</li>
+        <li><code>GET /api/memory/search</code> - 搜索动态记忆</li>
+        <li><code>GET /api/stats</code> - 系统统计信息（缓存命中率/知识源数量/记忆数量）</li>
+      </ul>
+    </li>
+    <li><strong>新增模块</strong>：
+      <ul>
+        <li><code>backend/multi_sources.py</code> - 多知识源管理器（WikipediaSource / BaiduBaikeSource / LocalVectorStoreSource）</li>
+        <li><code>backend/prompt_system.py</code> - 强制引用 Prompt 系统（build_strict_prompt / build_no_context_prompt / build_intent_classification_prompt）</li>
+        <li><code>backend/user_profile.py</code> - 用户画像系统（静态画像 + 动态记忆 + 私有文档）</li>
+        <li><code>backend/common_sense_cache.py</code> - 常识缓存（精确匹配 + 模糊匹配）</li>
+        <li><code>backend/logger.py</code> - 统一日志系统（控制台彩色 + 文件滚动）</li>
+      </ul>
+    </li>
+    <li><strong>重构 main.py</strong>：
+      <ul>
+        <li>整合所有新模块到统一查询流程：常识缓存检查 → 意图分类（A/B/C） → 多知识源检索 → 用户画像注入 → 强制引用 Prompt → LLM 推理 → 动态记忆沉淀</li>
+        <li>意图路由：A类（个人记忆）、B类（公共知识）、C类（混合场景）分别处理</li>
+      </ul>
+    </li>
+    <li><strong>更新 config.py</strong>：
+      <ul>
+        <li>新增 MULTI_SOURCES 配置（各知识源开关和权重）</li>
+        <li>新增 INTENT_ROUTING 配置（意图路由开关）</li>
+        <li>新增 USER_PROFILE 配置（用户画像开关和存储路径）</li>
+        <li>新增 HALLUCINATION_GUARD 配置（强制引用开关和兜底文本）</li>
+        <li>自动创建 logs/ 目录</li>
+      </ul>
+    </li>
+    <li><strong>修复</strong>：
+      <ul>
+        <li>启动脚本换行符问题（CRLF 规范化）</li>
+        <li>NumPy 版本兼容性（锁定 numpy==1.26.4）</li>
+      </ul>
+    </li>
+  </ul>
+</td></tr>
+<tr><td>v6</td><td>2026-07-03</td><td>
+  <ul>
+    <li><strong>修复 NumPy 兼容性问题</strong>：
+      <ul>
+        <li>锁定 numpy<2.0，解决与 chromadb 0.4.22 的兼容问题</li>
+        <li>NumPy 2.0 移除了 np.float_，chromadb 仍在使用导致启动失败</li>
+      </ul>
+    </li>
+    <li><strong>依赖版本</strong>：
+      <ul>
+        <li>numpy<2.0（必须，否则与 chromadb 冲突）</li>
+        <li>chromadb==0.4.22</li>
+        <li>其他依赖保持不变</li>
+      </ul>
+    </li>
+  </ul>
+</td></tr>
+<tr><td>v9</td><td>2026-07-03</td><td>
+  <ul>
+    <li><strong>修复 start.bat 启动时序与 GUI 启动问题</strong>：
+      <ul>
+        <li>启用延迟变量扩展（enabledelayedexpansion），修复循环内变量判断问题</li>
+        <li>API 等待时间从25秒增加到60秒（每3秒检查一次，最多20轮）</li>
+        <li>首次运行提示嵌入模型下载（约400MB，需30秒+）</li>
+        <li>API 启动失败时显示详细错误原因和排查步骤</li>
+        <li>GUI 启动后等待2秒确保窗口初始化</li>
+        <li>修复 start.bat 格式问题（多余空行、混合换行符）</li>
+      </ul>
+    </li>
+    <li><strong>根因分析</strong>：
+      <ul>
+        <li>日志显示 API 健康检查失败，因为嵌入模型下载耗时33秒</li>
+        <li>GUI 客户端因 API 启动流程中断而未正常启动</li>
+        <li>start.bat 中存在语法错误（延迟扩展未启用）</li>
+      </ul>
+    </li>
+  </ul>
+</td></tr>
+<tr><td>v8</td><td>2026-07-03</td><td>
+  <ul>
+    <li><strong>修复 start.bat 启动时序问题</strong>：
+      <ul>
+        <li>API 首次健康检查时机过早（嵌入模型需下载约30秒），导致误判为启动失败</li>
+        <li>改为最多等待5轮（约25秒），确保模型加载完成后再判断</li>
+        <li>GUI 窗口改用 cmd /k 保持窗口打开，崩溃时显示错误信息而非闪退</li>
+        <li>修正换行符格式为纯 CRLF</li>
+      </ul>
+    </li>
+  </ul>
+</td></tr>
+<tr><td>v7</td><td>2026-07-03</td><td>
+  <ul>
+    <li><strong>修复 NumPy 兼容性问题</strong>：
+      <ul>
+        <li>锁定 numpy==1.26.4（chromadb 0.4.22 不兼容 NumPy 2.0+）</li>
+        <li>原版本约束 numpy<2.0 被覆盖，现使用明确版本号</li>
+        <li>NumPy 2.0 移除了 np.float_ 等旧 API，导致 chromadb 启动失败</li>
+      </ul>
+    </li>
+    <li><strong>依赖版本确认</strong>：
+      <ul>
+        <li>numpy==1.26.4（必须，否则与 chromadb 冲突）</li>
+        <li>chromadb==0.4.22</li>
+        <li>其他依赖版本不变</li>
+      </ul>
+    </li>
+  </ul>
+</td></tr>
+  <ul>
+    <li><strong>启动脚本增强</strong>：
+      <ul>
+        <li>增加依赖自动检查（fastapi, uvicorn, chromadb 等）</li>
+        <li>增加 PyQt6 自动安装检测</li>
+        <li>API 启动后验证健康检查接口 /health</li>
+        <li>失败时显示错误信息而非静默退出</li>
+      </ul>
+    </li>
+    <li><strong>问题说明</strong>：
+      <ul>
+        <li>GUI 是 PyQt6 桌面程序，需 Python + PyQt6 运行</li>
+        <li>API 连接被拒：原因为后端启动失败窗口静默关闭</li>
+        <li>现在启动失败会显示错误并暂停</li>
+      </ul>
+    </li>
+  </ul>
+</td></tr>
+<tr><td>v4</td><td>2026-07-03</td><td>
+  <ul>
+    <li><strong>端口配置优化</strong>：
+      <ul>
+        <li>API 服务端口：8000 → 9820（避免与常见开发端口冲突）</li>
+        <li>前端 GUI 自动适配新端口</li>
+        <li>启动脚本显示信息同步更新</li>
+      </ul>
+    </li>
+    <li><strong>修改文件</strong>：
+      <ul>
+        <li><code>backend/config.py</code>: API_PORT = 9820</li>
+        <li><code>frontend/gui_client.py</code>: API_BASE_URL = "http://localhost:9820"</li>
+        <li><code>start.bat</code>: 显示地址更新</li>
+      </ul>
+    </li>
+  </ul>
+</td></tr>
+<tr><td>v3</td><td>2026-07-03</td><td>
+  <ul>
+    <li><strong>修复 start.bat 启动问题</strong>：
+      <ul>
+        <li>移除第一行无效的 Python 文档字符串语法</li>
+        <li>修正文件换行符格式（Unix LF → Windows CRLF）</li>
+      </ul>
+    </li>
+    <li><strong>新增 install.bat 依赖安装脚本</strong>：
+      <ul>
+        <li>一键检查 Python、Ollama 环境</li>
+        <li>自动安装 Python 依赖（pip install -r requirements.txt）</li>
+        <li>自动拉取 AI 模型（ollama pull deepseek-r1:1.5b）</li>
+        <li>完整的错误提示和安装引导</li>
+      </ul>
+    </li>
+    <li><strong>依赖状态</strong>：
+      <ul>
+        <li>Ollama：需 Windows 端手动安装（https://ollama.com/download）</li>
+        <li>模型：需执行 <code>ollama pull deepseek-r1:1.5b</code> 拉取</li>
+        <li>Python 依赖：需执行 <code>pip install -r backend/requirements.txt</code></li>
+      </ul>
+    </li>
+  </ul>
+</td></tr>
+<tr><td>v2</td><td>2026-07-02</td><td>
+  <ul>
+    <li><strong>标准化 MVP 产品完成</strong>：
+      <ul>
+        <li>FastAPI 后端：知识库检索 + 向量数据库 + LLM 推理引擎 + 引用标注</li>
+        <li>PyQt6 桌面客户端：完整 GUI 界面，支持维基百科 / 向量库双模式</li>
+        <li>核心模块：knowledge_base.py（维基API）、vector_store.py（ChromaDB）、llm_engine.py（Ollama）</li>
+        <li>Windows 一键启动脚本 start.bat</li>
+        <li>README.md 使用文档</li>
+      </ul>
+    </li>
+    <li><strong>技术栈</strong>：
+      <ul>
+        <li>推理模型：DeepSeek-R1-Distill-1.5B（Ollama）</li>
+        <li>嵌入模型：shibing624/text2vec-base-chinese</li>
+        <li>向量库：ChromaDB 持久化存储</li>
+        <li>知识源：中文维基百科 API（实时联网）</li>
+      </ul>
+    </li>
+    <li><strong>API 接口</strong>：
+      <ul>
+        <li>POST /api/query - 智能问答（检索+推理+引用）</li>
+        <li>POST /api/search - 维基百科搜索</li>
+        <li>POST /api/vector/search - 向量库检索</li>
+        <li>POST /api/vector/add - 添加文档到向量库</li>
+      </ul>
+    </li>
+    <li><strong>项目结构</strong>：backend/（FastAPI）+ frontend/（PyQt6）+ data/（ChromaDB）</li>
+  </ul>
+</td></tr>
+<tr><td>v1</td><td>2026-07-02</td><td>
+  <ul>
+    <li><strong>初始文档创建</strong>：基于「资料1.txt」整理，覆盖项目全貌</li>
+    <li>章节涵盖：项目概述、硬件性能、模型选型、知识数据源、Token 分析、商业化方案、合规风控、优化方向</li>
+    <li>架构定位：本地微型推理核（DeepSeek-R1-Distill-1.5B）+ 联网权威知识库实时检索</li>
+    <li>硬件基线：Intel Ultra 5 125H / 32GB / Arc GPU，纯 CPU 45-60 t/s，核显 70-90 t/s</li>
+    <li>商业路线：5 条盈利路线（工具包 → C 端 → B 端 → SaaS → API），90 天执行计划</li>
+  </ul>
+</td></tr>
+</table>
+
+<div class="footer-note">
+  轻量化本地推理核 + 联网权威知识库 项目文档 · v2 · 2026-07-02
+</div>
+
+</body>
+</html>
