@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Little LLM - 本地知识问答</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, "Microsoft YaHei", sans-serif;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #fff;
+            color: #222;
+            line-height: 1.6;
+        }
+        h1 { font-size: 22px; margin-bottom: 6px; }
+        .subtitle { color: #666; font-size: 13px; margin-bottom: 30px; }
+        .input-area { display: flex; gap: 8px; margin-bottom: 24px; }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 15px;
+            outline: none;
+        }
+        input[type="text"]:focus { border-color: #333; }
+        button {
+            padding: 10px 20px;
+            background: #222;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        button:hover { background: #444; }
+        button:disabled { background: #999; cursor: not-allowed; }
+        .result { margin-top: 20px; }
+        .answer-box {
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 16px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 60px;
+        }
+        .sources {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        .sources h3 { font-size: 14px; margin-bottom: 8px; color: #555; }
+        .source-item {
+            font-size: 13px;
+            margin-bottom: 6px;
+            padding: 8px;
+            background: #fafafa;
+            border-left: 3px solid #ccc;
+        }
+        .source-item a { color: #0066cc; text-decoration: none; }
+        .source-item a:hover { text-decoration: underline; }
+        .loading { color: #666; font-style: italic; }
+        .error { color: #c00; }
+        .history { margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; }
+        .history-item { margin-bottom: 16px; }
+        .history-item .q { font-weight: bold; font-size: 14px; }
+        .history-item .a { font-size: 14px; color: #444; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Little LLM</h1>
+    <p class="subtitle">本地运行 · 强制引用 · 拒绝幻觉</p>
+
+    <div class="input-area">
+        <input type="text" id="question" placeholder="输入你的问题，例如：什么是量子计算？" autofocus>
+        <button id="askBtn" onclick="askQuestion()">提问</button>
+    </div>
+
+    <div id="result" class="result" style="display:none;">
+        <div id="answer" class="answer-box"></div>
+        <div id="sources" class="sources"></div>
+    </div>
+
+    <div id="history" class="history" style="display:none;">
+        <h3 style="font-size:14px; color:#555; margin-bottom:12px;">历史记录</h3>
+        <div id="historyList"></div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':9821';
+        const questionInput = document.getElementById('question');
+        const askBtn = document.getElementById('askBtn');
+        const resultDiv = document.getElementById('result');
+        const answerDiv = document.getElementById('answer');
+        const sourcesDiv = document.getElementById('sources');
+        const historyDiv = document.getElementById('history');
+        const historyList = document.getElementById('historyList');
+
+        // 回车键提交
+        questionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') askQuestion();
+        });
+
+        async function askQuestion() {
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            // 显示加载状态
+            askBtn.disabled = true;
+            askBtn.textContent = '思考中...';
+            resultDiv.style.display = 'block';
+            answerDiv.className = 'answer-box loading';
+            answerDiv.textContent = '正在检索维基百科并调用本地模型，请稍候...';
+            sourcesDiv.innerHTML = '';
+
+            try {
+                const resp = await fetch(API_BASE + '/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    throw new Error(err.detail || '请求失败');
+                }
+
+                const data = await resp.json();
+
+                // 显示答案
+                answerDiv.className = 'answer-box';
+                answerDiv.textContent = data.answer || '（模型未返回有效回答）';
+
+                // 显示来源
+                if (data.sources && data.sources.length > 0) {
+                    let html = '<h3>📖 引用来源</h3>';
+                    data.sources.forEach(src => {
+                        html += `<div class="source-item">
+                            <a href="${src.url}" target="_blank">${src.title}</a>
+                            <div style="color:#888; font-size:12px; margin-top:2px;">${src.snippet}...</div>
+                        </div>`;
+                    });
+                    sourcesDiv.innerHTML = html;
+                }
+
+                // 加入历史
+                addToHistory(question, data.answer);
+
+            } catch (err) {
+                answerDiv.className = 'answer-box error';
+                answerDiv.textContent = '错误: ' + err.message;
+            } finally {
+                askBtn.disabled = false;
+                askBtn.textContent = '提问';
+                questionInput.value = '';
+                questionInput.focus();
+            }
+        }
+
+        function addToHistory(question, answer) {
+            historyDiv.style.display = 'block';
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `<div class="q">Q: ${escapeHtml(question)}</div>
+                              <div class="a">A: ${escapeHtml(answer.slice(0, 200))}${answer.length > 200 ? '...' : ''}</div>`;
+            historyList.insertBefore(item, historyList.firstChild);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

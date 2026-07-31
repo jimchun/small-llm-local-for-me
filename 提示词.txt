@@ -1,0 +1,11 @@
+#每次检查和优化之前，仔细阅读项目文档："D:\little-llm-local-for-me\项目文档.html"；
+#所有的会话都是用简体中文；
+#创建合适的agent；
+#选择合适的agent和合适的模型干适合的工作；
+#完成更新后，按照git版本要求更新项目和项目文档："D:\little-llm-local-for-me\项目文档.html"；
+
+##需要优化内容如下：
+
+1、请检查整个项目路径，最优化项目架构；
+2、同步推送项目文件到：https://github.com/jimchun/small-llm-local-for-me
+3、并非所有文件同步，只有必要的文件同步到远程仓库；

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Little LLM · 项目文档</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #fff; color: #1a1a1a; line-height: 1.8; }
+
+        /* 顶部 Hero */
+        .hero { background: #0f172a; color: #fff; padding: 80px 40px 60px; text-align: center; }
+        .hero h1 { font-size: 42px; font-weight: 700; letter-spacing: 2px; margin-bottom: 12px; }
+        .hero .subtitle { font-size: 18px; color: #94a3b8; margin-bottom: 24px; }
+        .hero .vision { font-size: 15px; color: #cbd5e1; max-width: 700px; margin: 0 auto; line-height: 2; border-left: 3px solid #3b82f6; padding-left: 16px; text-align: left; }
+        .hero .badge { display: inline-block; background: #3b82f6; color: #fff; font-size: 12px; padding: 4px 12px; border-radius: 20px; margin-bottom: 20px; }
+
+        /* 导航 */
+        .nav { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 12px 40px; position: sticky; top: 0; z-index: 100; }
+        .nav-inner { max-width: 1100px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 6px; }
+        .nav a { font-size: 13px; color: #475569; text-decoration: none; padding: 4px 10px; border-radius: 4px; transition: all .2s; }
+        .nav a:hover { background: #e2e8f0; color: #0f172a; }
+
+        /* 主内容 */
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px; }
+        section { margin-bottom: 56px; }
+        h2 { font-size: 26px; font-weight: 700; color: #0f172a; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; }
+        h3 { font-size: 18px; font-weight: 600; color: #1e293b; margin: 24px 0 12px; }
+        p { margin-bottom: 14px; font-size: 15px; color: #334155; }
+
+        /* 核心理念卡片 */
+        .vision-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin: 24px 0; }
+        .vision-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; }
+        .vision-card .icon { font-size: 28px; margin-bottom: 10px; }
+        .vision-card h4 { font-size: 16px; font-weight: 600; color: #0f172a; margin-bottom: 8px; }
+        .vision-card p { font-size: 13px; color: #64748b; margin: 0; line-height: 1.7; }
+
+        /* 架构图 */
+        .arch-box { background: #0f172a; border-radius: 10px; padding: 32px; margin: 24px 0; overflow-x: auto; }
+        .arch-row { display: flex; justify-content: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+        .arch-node { background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 12px 18px; color: #e2e8f0; font-size: 13px; text-align: center; min-width: 120px; }
+        .arch-node.highlight { border-color: #3b82f6; background: #1e3a5f; }
+        .arch-node.green { border-color: #22c55e; background: #14532d; }
+        .arch-node.orange { border-color: #f59e0b; background: #451a03; }
+        .arch-arrow { text-align: center; color: #64748b; font-size: 20px; margin: 8px 0; }
+
+        /* 表格 */
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+        th { background: #f1f5f9; font-weight: 600; text-align: left; padding: 10px 14px; border-bottom: 2px solid #e2e8f0; color: #334155; }
+        td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #475569; }
+        tr:hover td { background: #f8fafc; }
+
+        /* 代码块 */
+        .code-block { background: #1e293b; color: #e2e8f0; padding: 16px 20px; border-radius: 6px; font-family: "Cascadia Code", "Consolas", monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; margin: 12px 0; white-space: pre-wrap; }
+        .code-block .comment { color: #64748b; }
+        .code-block .keyword { color: #7dd3fc; }
+        .code-block .string { color: #86efac; }
+
+        /* 流程图 */
+        .flow { display: flex; flex-wrap: wrap; gap: 0; align-items: center; margin: 20px 0; }
+        .flow-step { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 16px; font-size: 13px; color: #334155; text-align: center; min-width: 130px; }
+        .flow-step.active { background: #dbeafe; border-color: #3b82f6; color: #1e40af; font-weight: 600; }
+        .flow-arrow { font-size: 18px; color: #94a3b8; padding: 0 6px; }
+
+        /* 版本时间线 */
+        .timeline { border-left: 2px solid #e2e8f0; padding-left: 24px; margin: 20px 0; }
+        .timeline-item { margin-bottom: 28px; position: relative; }
+        .timeline-item::before { content: ''; position: absolute; left: -30px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; border: 2px solid #fff; box-shadow: 0 0 0 2px #3b82f6; }
+        .timeline-item .ver { font-size: 15px; font-weight: 600; color: #0f172a; }
+        .timeline-item .date { font-size: 12px; color: #94a3b8; margin-left: 8px; }
+        .timeline-item .desc { font-size: 14px; color: #475569; margin-top: 4px; }
+
+        /* 指标卡 */
+        .metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 20px 0; }
+        .metric { text-align: center; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .metric .num { font-size: 32px; font-weight: 700; color: #0f172a; }
+        .metric .label { font-size: 13px; color: #64748b; margin-top: 4px; }
+
+        /* 对比表 */
+        .compare-table th:first-child { width: 140px; }
+        .compare-table .pro { color: #16a34a; font-weight: 600; }
+        .compare-table .con { color: #dc2626; }
+        .compare-table .neutral { color: #64748b; }
+
+        /* API 列表 */
+        .api-item { display: flex; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+        .api-method { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; min-width: 48px; text-align: center; }
+        .api-method.get { background: #dbeafe; color: #1d4ed8; }
+        .api-method.post { background: #dcfce7; color: #15803d; }
+        .api-path { font-family: monospace; font-size: 14px; color: #0f172a; min-width: 200px; }
+        .api-desc { font-size: 13px; color: #64748b; }
+
+        /* 文件树 */
+        .file-tree { font-family: monospace; font-size: 13px; line-height: 1.8; color: #475569; background: #f8fafc; padding: 20px 24px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .file-tree .dir { color: #1d4ed8; font-weight: 600; }
+        .file-tree .file { color: #475569; }
+        .file-tree .comment { color: #94a3b8; }
+
+        /* 底部 */
+        .footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 30px 40px; text-align: center; color: #94a3b8; font-size: 13px; }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .hero { padding: 50px 20px 40px; }
+            .hero h1 { font-size: 28px; }
+            .container { padding: 24px 16px; }
+            .arch-row { flex-direction: column; align-items: center; }
+            .flow { flex-direction: column; align-items: stretch; }
+            .flow-arrow { transform: rotate(90deg); text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+    <div class="badge">开源 · 本地优先 · 零幻觉</div>
+    <h1>Little LLM</h1>
+    <div class="subtitle">让每个人的电脑，都能运行自己的 AI</div>
+    <div class="vision">
+        核心理想：不依赖云端大模型，用参数小的本地推理核（逻辑核），搭配可验证的外部知识源，让知识和经验真正"外包"给一台属于你自己的机器。你的数据永远不离开你的电脑，你的 AI 只说你找得到的话。<br><br>
+        <strong>—— 参数小一点，可信度高一点。</strong>
+    </div>
+</div>
+
+<!-- 导航 -->
+<div class="nav">
+    <div class="nav-inner">
+        <a href="#vision">核心理念</a>
+        <a href="#architecture">系统架构</a>
+        <a href="#modules">核心模块</a>
+        <a href="#flow">查询流程</a>
+        <a href="#tech">技术栈</a>
+        <a href="#api">API 接口</a>
+        <a href="#files">项目结构</a>
+        <a href="#user">用户画像</a>
+        <a href="#market">市场定位</a>
+        <a href="#versions">版本历史</a>
+        <a href="#roadmap">路线图</a>
+        <a href="#quickstart">快速开始</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- 1. 核心理念 -->
+    <section id="vision">
+        <h2>一、核心理念</h2>
+        <p>Little LLM 不是要造一个更大的模型，而是要让<strong>已经存在的小模型变得可信、可用、可溯源</strong>。</p>
+        <p>当前 AI 的困境：云端大模型能力强，但数据要上传、回答不可验证、隐私无法保障。Little LLM 选择另一条路——用本地 1.5B 参数的小模型作为「逻辑核」，负责推理和组织语言；把知识获取「外包」给权威数据源（维基百科、本地知识库），确保每个回答都有据可查。</p>
+
+        <div class="vision-grid">
+            <div class="vision-card">
+                <div class="icon">🖥️</div>
+                <h4>本地优先</h4>
+                <p>推理在本地完成，数据不上云。你的知识、记忆、文档，永远留在你的硬盘上。</p>
+            </div>
+            <div class="vision-card">
+                <div class="icon">🔬</div>
+                <h4>零幻觉</h4>
+                <p>所有回答强制引用来源。找不到资料就说"不知道"，绝不编造。</p>
+            </div>
+            <div class="vision-card">
+                <div class="icon">🧩</div>
+                <h4>知识外包</h4>
+                <p>小模型只做逻辑推理，知识获取交给权威数据源。参数小但可信度高。</p>
+            </div>
+            <div class="vision-card">
+                <div class="icon">🧠</div>
+                <h4>经验沉淀</h4>
+                <p>用户记忆、私有文档、文件夹监控——系统越用越懂你，经验持续积累。</p>
+            </div>
+        </div>
+
+        <div class="metric-row">
+            <div class="metric">
+                <div class="num">1.5B</div>
+                <div class="label">推理参数</div>
+            </div>
+            <div class="metric">
+                <div class="num">0</div>
+                <div class="label">数据上传量</div>
+            </div>
+            <div class="metric">
+                <div class="num">100%</div>
+                <div class="label">回答可溯源</div>
+            </div>
+            <div class="metric">
+                <div class="num">∞</div>
+                <div class="label">知识可扩展</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. 系统架构 -->
+    <section id="architecture">
+        <h2>二、系统架构</h2>
+        <p>采用「推理核 + 知识层 + 记忆层」三层解耦架构，小模型只做逻辑，知识按需检索。</p>
+
+        <div class="arch-box">
+            <div class="arch-row">
+                <div class="arch-node" style="min-width: 300px; border-color: #f59e0b; background: #451a03;">
+                    <div style="font-size: 11px; color: #f59e0b; margin-bottom: 4px;">用户层</div>
+                    PyQt6 桌面客户端
+                </div>
+            </div>
+            <div class="arch-arrow">↓ HTTP API (localhost:9820)</div>
+            <div class="arch-row">
+                <div class="arch-node highlight" style="min-width: 300px;">
+                    <div style="font-size: 11px; color: #60a5fa; margin-bottom: 4px;">核心层 · FastAPI</div>
+                    意图路由 → 多知识源检索 → 强制引用 Prompt → LLM 推理
+                </div>
+            </div>
+            <div class="arch-arrow">↓ 调用各子系统</div>
+            <div class="arch-row">
+                <div class="arch-node green">
+                    <div style="font-size: 11px; color: #4ade80; margin-bottom: 4px;">推理核</div>
+                    Ollama<br>DeepSeek-R1 1.5B
+                </div>
+                <div class="arch-node">
+                    <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">知识层</div>
+                    维基百科 API<br>本地向量库 (ChromaDB)
+                </div>
+                <div class="arch-node orange">
+                    <div style="font-size: 11px; color: #fbbf24; margin-bottom: 4px;">记忆层</div>
+                    用户画像<br>动态记忆 · 常识缓存
+                </div>
+            </div>
+            <div class="arch-arrow">↓ 持久化</div>
+            <div class="arch-row">
+                <div class="arch-node" style="min-width: 300px;">
+                    <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">存储层</div>
+                    ChromaDB 向量库 (L1热缓存 + L2主存储) · JSON 用户画像 · 文件监控元数据
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. 核心模块 -->
+    <section id="modules">
+        <h2>三、核心模块</h2>
+
+        <h3>3.1 意图路由系统（A/B/C 三分类）</h3>
+        <p>每次查询先进行意图分类，决定调用哪些知识源，避免不必要的检索开销。</p>
+        <table>
+            <tr><th>意图</th><th>含义</th><th>知识源</th><th>典型问题</th></tr>
+            <tr><td><strong>A</strong></td><td>个人记忆/私有文档</td><td>用户动态记忆</td><td>"我之前提到的项目"</td></tr>
+            <tr><td><strong>B</strong></td><td>公共知识/百科事实</td><td>维基百科 + 向量库</td><td>"量子力学是什么"</td></tr>
+            <tr><td><strong>C</strong></td><td>公共知识 + 个人情况</td><td>全部知识源</td><td>"根据我的背景，该学什么"</td></tr>
+        </table>
+
+        <h3>3.2 强制引用系统（防幻觉核心）</h3>
+        <p>Prompt 工程中写入铁律：每个事实性陈述必须标注来源编号，无资料时明确兜底。这是 Little LLM 与传统 AI 助手的本质区别——<strong>宁可不说，也不编造</strong>。</p>
+        <div class="code-block"><span class="comment">// 强制引用规则（嵌入 Prompt）</span>
+1. 只使用提供的参考资料回答
+2. 每个事实性陈述标注来源（如 [来源1]）
+3. 无相关信息时明确说"根据提供的资料，无法回答"
+4. 禁止使用自身知识或推测
+5. 多来源冲突时指出差异</div>
+
+        <h3>3.3 多知识源管理器</h3>
+        <p>可插拔的知识源架构，按权重融合排序：</p>
+        <table>
+            <tr><th>知识源</th><th>权重</th><th>特点</th><th>权威性</th></tr>
+            <tr><td>常识缓存</td><td>1.0</td><td>100+ 条基础常识，最快响应</td><td>确定</td></tr>
+            <tr><td>维基百科</td><td>0.9</td><td>联网实时检索，权威百科</td><td>高</td></tr>
+            <tr><td>本地向量库</td><td>0.8</td><td>用户私有知识，语义检索</td><td>取决于来源</td></tr>
+            <tr><td>百度百科(替代)</td><td>0.7</td><td>中文知识补充</td><td>中</td></tr>
+        </table>
+
+        <h3>3.4 三级向量数据库</h3>
+        <p>基于 ChromaDB 的分层向量存储，模拟 CPU 缓存策略：</p>
+        <table>
+            <tr><th>层级</th><th>用途</th><th>容量上限</th><th>淘汰策略</th></tr>
+            <tr><td><strong>L1 热缓存</strong></td><td>高频访问数据</td><td>1,000 条</td><td>LRU（最近最少使用）</td></tr>
+            <tr><td><strong>L2 主存储</strong></td><td>用户文档 + 知识缓存</td><td>10,000 条</td><td>不自动淘汰</td></tr>
+            <tr><td><strong>L3 归档</strong></td><td>预留接口</td><td>—</td><td>—</td></tr>
+        </table>
+        <p>查询流程：先查 L1（毫秒级命中）→ 未命中再查 L2 → 合并去重排序。L2 中被访问 ≥3 次的文档自动提升到 L1。</p>
+
+        <h3>3.5 用户画像系统</h3>
+        <p>三层记忆架构，让 AI 越用越懂你：</p>
+        <table>
+            <tr><th>层次</th><th>内容</th><th>存储</th></tr>
+            <tr><td>静态画像</td><td>姓名、职业、背景、偏好</td><td>JSON 持久化</td></tr>
+            <tr><td>动态记忆</td><td>历史问答、交互记录</td><td>关键词检索 + 时间排序</td></tr>
+            <tr><td>私有文档</td><td>用户上传的私人文件</td><td>向量索引</td></tr>
+        </table>
+
+        <h3>3.6 智能文件夹监控</h3>
+        <p>用户指定文件夹后，系统后台自动监控文件变更（MD5 哈希比对），仅处理修改过的文件。利用本地 LLM 提取摘要和关键词，自动向量化入库。</p>
+
+        <h3>3.7 学习缓存系统</h3>
+        <p>高频查询自动沉淀为常识，减少重复推理。支持查询次数统计、过期淘汰、自动提升为永久常识。</p>
+    </section>
+
+    <!-- 4. 查询流程 -->
+    <section id="flow">
+        <h2>四、查询流程</h2>
+        <p>一次完整的智能问答，经过 7 个步骤：</p>
+        <div class="flow">
+            <div class="flow-step active">① 常识缓存<br><small>最快，本地</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">② 意图分类<br><small>A/B/C</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">③ 多源检索<br><small>权重融合</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">④ 画像注入<br><small>个性化</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">⑤ Prompt构建<br><small>强制引用</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">⑥ LLM推理<br><small>本地生成</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">⑦ 记忆沉淀<br><small>经验积累</small></div>
+        </div>
+    </section>
+
+    <!-- 5. 技术栈 -->
+    <section id="tech">
+        <h2>五、技术栈</h2>
+        <table>
+            <tr><th>层级</th><th>技术</th><th>说明</th></tr>
+            <tr><td>后端框架</td><td>FastAPI + Uvicorn</td><td>高性能异步 API，端口 9820</td></tr>
+            <tr><td>推理引擎</td><td>Ollama + DeepSeek-R1-Distill-1.5B</td><td>本地推理，无需 GPU 也能跑</td></tr>
+            <tr><td>嵌入模型</td><td>text2vec-base-chinese</td><td>中文语义向量化</td></tr>
+            <tr><td>向量数据库</td><td>ChromaDB (Persistent)</td><td>L1+L2 分层，cosine 距离</td></tr>
+            <tr><td>知识源</td><td>维基百科 API</td><td>中文权威百科，实时联网</td></tr>
+            <tr><td>桌面客户端</td><td>PyQt6</td><td>原生桌面 GUI，跨平台</td></tr>
+            <tr><td>语言</td><td>Python 3.11+</td><td>全栈 Python</td></tr>
+        </table>
+    </section>
+
+    <!-- 6. API 接口 -->
+    <section id="api">
+        <h2>六、API 接口</h2>
+        <p>所有接口通过 HTTP JSON 调用，基础地址：<code>http://localhost:9820</code></p>
+
+        <h3>核心查询</h3>
+        <div class="api-item"><span class="api-method post">POST</span><span class="api-path">/api/query</span><span class="api-desc">智能问答（意图路由+多源检索+强制引用）</span></div>
+        <div class="api-item"><span class="api-method post">POST</span><span class="api-path">/api/search</span><span class="api-desc">多知识源搜索（仅检索不生成）</span></div>
+
+        <h3>向量库</h3>
+        <div class="api-item"><span class="api-method post">POST</span><span class="api-path">/api/vector/add</span><span class="api-desc">添加文档到向量库</span></div>
+        <div class="api-item"><span class="api-method post">POST</span><span class="api-path">/api/vector/search</span><span class="api-desc">向量语义搜索</span></div>
+        <div class="api-item"><span class="api-method get">GET</span><span class="api-path">/api/vector/stats</span><span class="api-desc">向量库统计（L1/L2 容量、命中率）</span></div>
+        <div class="api-item"><span class="api-method post">POST</span><span class="api-path">/api/vector/auto_promote</span><span class="api-desc">高频文档自动提升到 L1</span></div>
+
+        <h3>用户画像</h3>
+        <div class="api-item"><span class="api-method get">GET</span><span class="api-path">/api/profile</span><span class="api-desc">获取用户画像</span></div>
+        <div class="api-item"><span class="api-method post">POST</span><span class="api-path">/api/profile/update</span><span class="api-desc">更新静态画像</span></div>
+        <div class="api-item"><span class="api-method post">POST</span><span class="api-path">/api/memory/add</span><span class="api-desc">添加动态记忆</span></div>
+        <div class="api-item"><span class="api-method get">GET</span><span class="api-path">/api/memory/search</span><span class="api-desc">搜索动态记忆</span></div>
+
+        <h3>文件夹监控</h3>
+        <div class="api-item"><span class="api-method get">GET</span><span class="api-path">/api/monitor/status</span><span class="api-desc">获取监控状态</span></div>
+        <div class="api-item"><span class="api-method post">POST</span><span class="api-path">/api/monitor/add_folder</span><span class="api-desc">添加监控文件夹</span></div>
+        <div class="api-item"><span class="api-method post">POST</span><span class="api-path">/api/monitor/scan_now</span><span class="api-desc">立即扫描一次</span></div>
+        <div class="api-item"><span class="api-method get">GET</span><span class="api-path">/api/monitor/files</span><span class="api-desc">已监控文件列表</span></div>
+
+        <h3>系统</h3>
+        <div class="api-item"><span class="api-method get">GET</span><span class="api-path">/api/stats</span><span class="api-desc">系统全局统计</span></div>
+        <div class="api-item"><span class="api-method get">GET</span><span class="api-path">/health</span><span class="api-desc">健康检查</span></div>
+    </section>
+
+    <!-- 7. 项目结构 -->
+    <section id="files">
+        <h2>七、项目结构</h2>
+        <div class="file-tree">
+<span class="dir">little-llm-local-for-me/</span>
+├── <span class="dir">mvp/</span>                       <span class="comment"># MVP 最小可用版本（v17）</span>
+│   ├── <span class="dir">backend/</span>                <span class="comment"># 极简后端（~150行）</span>
+│   │   ├── <span class="file">main.py</span>            <span class="comment"># FastAPI + 维基百科 + 强制引用 + Ollama</span>
+│   │   └── <span class="file">requirements.txt</span>   <span class="comment"># 最小依赖</span>
+│   ├── <span class="dir">frontend/</span>               <span class="comment"># Web 前端（单文件）</span>
+│   │   └── <span class="file">index.html</span>         <span class="comment"># 问答界面 + 引用来源显示</span>
+│   ├── <span class="file">start.bat</span>              <span class="comment"># Windows 一键启动</span>
+│   └── <span class="file">README.md</span>              <span class="comment"># MVP 说明文档</span>
+├── <span class="dir">backend/</span>                     <span class="comment"># FastAPI 后端核心（完整版 v16）</span>
+│   ├── <span class="file">main.py</span>                   <span class="comment"># API 主应用（意图路由+多源整合+强制引用）</span>
+│   ├── <span class="file">config.py</span>                 <span class="comment"># 全局配置（模型、端口、权重）</span>
+│   ├── <span class="file">llm_engine.py</span>             <span class="comment"># LLM 推理引擎（Ollama 集成）</span>
+│   ├── <span class="file">prompt_system.py</span>          <span class="comment"># 强制引用 Prompt 系统</span>
+│   ├── <span class="file">multi_sources.py</span>          <span class="comment"># 多知识源管理器（权重分配）</span>
+│   ├── <span class="file">knowledge_base.py</span>         <span class="comment"># 维基百科 API 对接</span>
+│   ├── <span class="file">vector_store.py</span>           <span class="comment"># 三级向量库（L1/L2/L3）</span>
+│   ├── <span class="file">user_profile.py</span>           <span class="comment"># 用户画像（静态+动态+私有文档）</span>
+│   ├── <span class="file">common_sense_cache.py</span>     <span class="comment"># 常识缓存（100+ 条）</span>
+│   ├── <span class="file">learning_cache.py</span>         <span class="comment"># 学习缓存（高频沉淀）</span>
+│   ├── <span class="file">folder_monitor.py</span>         <span class="comment"># 智能文件夹监控</span>
+│   ├── <span class="file">logger.py</span>                 <span class="comment"># 统一日志系统</span>
+│   └── <span class="file">requirements.txt</span>          <span class="comment"># Python 依赖</span>
+├── <span class="dir">frontend/</span>                    <span class="comment"># 桌面客户端</span>
+│   └── <span class="file">gui_client.py</span>            <span class="comment"># PyQt6 GUI（问答+文件夹导入）</span>
+├── <span class="dir">data/</span>                        <span class="comment"># 数据存储</span>
+│   ├── <span class="dir">chroma_db/</span>              <span class="comment"># ChromaDB 持久化</span>
+│   ├── <span class="file">user_profile.json</span>        <span class="comment"># 用户画像</span>
+│   ├── <span class="file">common_sense.json</span>        <span class="comment"># 常识缓存</span>
+│   └── <span class="file">file_metadata.json</span>       <span class="comment"># 文件监控元数据</span>
+├── <span class="dir">models/</span>                      <span class="comment"># Ollama 模型文件</span>
+├── <span class="dir">scripts/</span>                     <span class="comment"># 启动/测试脚本</span>
+├── <span class="dir">docs/</span>                        <span class="comment"># 项目文档</span>
+├── <span class="dir">notes/</span>                       <span class="comment"># 开发笔记</span>
+├── <span class="dir">logs/</span>                        <span class="comment"># 日志（按日滚动）</span>
+└── <span class="file">start.bat</span>                   <span class="comment"># Windows 一键启动</span>
+        </div>
+    </section>
+
+    <!-- 8. 用户画像与市场 -->
+    <section id="user">
+        <h2>八、用户画像</h2>
+        <p>Little LLM 服务的人群有明确特征——他们<strong>在意隐私、讨厌黑箱、需要可信赖的答案</strong>。</p>
+
+        <table>
+            <tr><th>用户类型</th><th>核心诉求</th><th>使用场景</th></tr>
+            <tr><td><strong>注重隐私的个人用户</strong></td><td>数据不出本机，AI 辅助不影响隐私</td><td>日记整理、私人知识检索、学习笔记</td></tr>
+            <tr><td><strong>知识工作者</strong></td><td>需要可溯源的准确答案，不要幻觉</td><td>写作调研、资料整理、事实核查</td></tr>
+            <tr><td><strong>开发者/技术人员</strong></td><td>本地可控的 AI 能力，可二次开发</td><td>代码库文档检索、技术问答、知识库搭建</td></tr>
+            <tr><td><strong>企业内网场景</strong></td><td>离线可用、数据合规</td><td>内部文档管理、规章制度查询、经验传承</td></tr>
+        </table>
+
+        <h3>留存设计</h3>
+        <p>用户使用越久，系统价值越高——动态记忆积累、私有文档入库、文件夹持续监控、常识自动沉淀。这种「越用越好用」的正反馈是核心留存引擎。</p>
+    </section>
+
+    <section id="market">
+        <h2>九、市场定位与竞争分析</h2>
+
+        <h3>与云端 AI 的本质区别</h3>
+        <table class="compare-table">
+            <tr><th>维度</th><th>云端大模型（ChatGPT 等）</th><th>Little LLM</th></tr>
+            <tr><td>推理位置</td><td class="con">云端服务器</td><td class="pro">本地电脑</td></tr>
+            <tr><td>数据隐私</td><td class="con">数据上传云端</td><td class="pro">数据完全本地</td></tr>
+            <tr><td>幻觉控制</td><td class="neutral">概率性幻觉</td><td class="pro">强制引用，零幻觉</td></tr>
+            <tr><td>离线可用</td><td class="con">必须联网</td><td class="pro">完全离线可运行</td></tr>
+            <tr><td>模型参数</td><td class="pro">万亿级</td><td class="neutral">1.5B（够用就好）</td></tr>
+            <tr><td>费用</td><td class="con">订阅制/按量计费</td><td class="pro">完全免费开源</td></tr>
+            <tr><td>可定制性</td><td class="con">黑箱</td><td class="pro">全开源可改</td></tr>
+        </table>
+
+        <h3>商业模式思考</h3>
+        <p>Little LLM 定位为开源项目，核心引擎免费。潜在商业化方向：</p>
+        <table>
+            <tr><th>方向</th><th>描述</th></tr>
+            <tr><td>企业版部署服务</td><td>为企业定制内网 AI 知识库方案</td></tr>
+            <tr><td>知识源插件市场</td><td>行业专用知识源（医疗、法律、金融）</td></tr>
+            <tr><td>硬件预装</td><td>与 PC 厂商合作，预装本地 AI 助手</td></tr>
+            <tr><td>模型升级包</td><td>更大参数的本地模型 + 优化推理引擎</td></tr>
+        </table>
+    </section>
+
+    <!-- 10. 版本历史 -->
+    <section id="versions">
+        <h2>十、版本历史</h2>
+        <div class="timeline">
+            <div class="timeline-item">
+                <span class="ver">v17-mvp</span><span class="date">2026-07-31</span>
+                <div class="desc">MVP 最小可用版本 —— 极简架构验证核心理念：强制引用机制 + 维基百科知识源 + Ollama 本地推理，Web 前端替代 PyQt6，端口 9821</div>
+            </div>
+            <div class="timeline-item">
+                <span class="ver">v16</span><span class="date">2026-07-04</span>
+                <div class="desc">智能文件夹监控系统 —— 自动长期监控指定文件夹，检测变更，LLM 提取摘要，增量向量化</div>
+            </div>
+            <div class="timeline-item">
+                <span class="ver">v15</span><span class="date">2026-07-04</span>
+                <div class="desc">BUG 修复 + 学习缓存系统 —— 修复启动依赖问题、端口不一致、完善百度百科搜索实现</div>
+            </div>
+            <div class="timeline-item">
+                <span class="ver">v14</span><span class="date">2026-07-03</span>
+                <div class="desc">GUI 知识库管理 —— PyQt6 桌面客户端完成，支持问答 + 文件夹导入</div>
+            </div>
+            <div class="timeline-item">
+                <span class="ver">v12</span><span class="date">2026-07-03</span>
+                <div class="desc">首版可用 —— 解决依赖安装，服务启动测试通过</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 11. 路线图 -->
+    <section id="roadmap">
+        <h2>十一、路线图</h2>
+        <table>
+            <tr><th>阶段</th><th>目标</th><th>关键特性</th></tr>
+            <tr><td><strong>MVP v17 ✓</strong></td><td>核心理念验证</td><td>极简架构：强制引用 + 维基百科 + Ollama，Web前端一键启动</td></tr>
+            <tr><td>v18 规划</td><td>多知识源扩展</td><td>接入本地文档、PDF解析、多源权重融合</td></tr>
+            <tr><td>v19 规划</td><td>模型升级</td><td>支持切换更大参数模型（7B/14B）、量化推理优化</td></tr>
+            <tr><td>v20 规划</td><td>用户画像与记忆</td><td>个性化推荐、动态记忆、经验沉淀</td></tr>
+            <tr><td>v21 愿景</td><td>个人 AI 操作系统</td><td>完整的本地 AI 助手——记忆、学习、执行、自动化</td></tr>
+        </table>
+    </section>
+
+    <!-- 12. 快速开始 -->
+    <section id="quickstart">
+        <h2>十二、快速开始</h2>
+
+        <h3>环境要求</h3>
+        <p>Python 3.11+、Ollama（本地推理引擎）、Windows 10/11 或 Linux/macOS</p>
+
+        <h3>安装步骤</h3>
+        <div class="code-block"><span class="comment"># 1. 安装 Python 依赖</span>
+<span class="keyword">cd</span> backend
+<span class="keyword">pip</span> install -r requirements.txt
+
+<span class="comment"># 2. 安装 Ollama 并拉取模型</span>
+<span class="comment"># 下载地址: https://ollama.com/download</span>
+<span class="keyword">ollama</span> pull deepseek-r1:1.5b
+
+<span class="comment"># 3. Windows 一键启动</span>
+<span class="keyword">start.bat</span></div>
+
+        <h3>手动启动</h3>
+        <div class="code-block"><span class="comment"># 终端 1 - 启动后端 API</span>
+<span class="keyword">cd</span> backend
+<span class="keyword">python</span> main.py
+<span class="comment"># → API 运行在 http://localhost:9820</span>
+
+<span class="comment"># 终端 2 - 启动桌面客户端</span>
+<span class="keyword">cd</span> frontend
+<span class="keyword">python</span> gui_client.py</div>
+
+        <h3>验证</h3>
+        <div class="code-block"><span class="comment"># 健康检查</span>
+curl http://localhost:9820/health
+<span class="comment"># → {"status": "ok"}</span>
+
+<span class="comment"># 智能问答</span>
+curl -X POST http://localhost:9820/api/query \
+  -H "Content-Type: application/json" \
+  -d '{"question": "量子力学是什么"}'</div>
+    </section>
+
+</div>
+
+<!-- 底部 -->
+<div class="footer">
+    Little LLM · 让每个人的电脑都能运行自己的 AI<br>
+    开源协议 Apache 2.0 · 当前版本 v16 · 端口 9820
+</div>
+
+</body>
+</html>
