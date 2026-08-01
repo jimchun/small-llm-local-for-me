@@ -2,12 +2,18 @@
 Little LLM MVP - 极简本地知识问答后端
 核心卖点：强制引用机制，拒绝幻觉
 """
+import os
 import requests
+from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
 app = FastAPI(title="Little LLM MVP")
+
+# 前端文件路径
+FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 
 # 允许前端跨域访问
 app.add_middleware(
@@ -141,6 +147,15 @@ def call_ollama(prompt: str) -> str:
 def health():
     """健康检查"""
     return {"status": "ok"}
+
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    """前端页面"""
+    html_file = FRONTEND_DIR / "index.html"
+    if not html_file.exists():
+        raise HTTPException(status_code=404, detail="Frontend not found")
+    return html_file.read_text(encoding="utf-8")
 
 
 @app.post("/query", response_model=QueryResponse)

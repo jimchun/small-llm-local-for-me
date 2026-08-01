@@ -91,7 +91,10 @@
     </div>
 
     <script>
-        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':9821';
+        // API 地址：优先使用相对路径，支持 http 和 file 协议
+        const API_BASE = window.location.protocol === 'file:' 
+            ? 'http://127.0.0.1:9821'
+            : '';
         const questionInput = document.getElementById('question');
         const askBtn = document.getElementById('askBtn');
         const resultDiv = document.getElementById('result');

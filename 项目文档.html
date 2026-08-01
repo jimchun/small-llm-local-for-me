@@ -450,10 +450,18 @@
 
     <!-- 10. 版本历史 -->
     <section id="versions">
-        <h2>十、版本历史</h2>
+        <h2>版本历史</h2>
         <div class="timeline">
             <div class="timeline-item">
-                <span class="ver">v17.1-mvp</span><span class="date">2026-08-01</span>
+                <span class="ver">v17.1 (2026-08-01)</span>
+                <ul>
+                    <li><strong>后端路由修复</strong>：添加根路径 "/" 服务前端页面，访问 http://127.0.0.1:9821/ 直接显示界面</li>
+                    <li><strong>前端 API 路径修复</strong>：使用相对路径调用 API，支持 file:// 和 http:// 两种协议</li>
+                    <li>简化启动流程，无需单独打开 HTML 文件</li>
+                </ul>
+            </div>
+            <div class="timeline-item">
+                <span class="ver">v17 (2026-07-31)</span>
                 <div class="desc">一键启动优化 —— start.bat 自动创建虚拟环境、安装依赖、检查 Ollama 和模型，用户只需双击即可运行</div>
             </div>
             <div class="timeline-item">
