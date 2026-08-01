@@ -1,86 +1,62 @@
 @echo off
-chcp 65001 >nul
+chcp 65001 >nul 2>&1
 echo ========================================
-echo   Little LLM MVP v17 - 一键启动
+echo   Little LLM MVP v17 - Auto Setup
 echo ========================================
 echo.
 
-REM ========== 1. 检查 Python ==========
-echo [1/5] 检查 Python 环境...
-python --version >nul 2>&1
+REM ========== 1. Check Python ==========
+echo [1/5] Checking Python...
+python --version 2>nul
 if errorlevel 1 (
-    echo [错误] 未找到 Python，请先安装 Python 3.11+
-    echo 下载地址: https://www.python.org/downloads/
+    echo [ERROR] Python not found! Install Python 3.11+ first.
+    echo Download: https://www.python.org/downloads/
     pause
     exit /b 1
 )
-for /f "tokens=2 delims= " %%v in ('python --version 2^>^&1') do echo       已检测到 Python %%v
 
-REM ========== 2. 创建虚拟环境并安装依赖 ==========
-echo [2/5] 检查虚拟环境与依赖...
+REM ========== 2. Create venv and install deps ==========
+echo [2/5] Setting up virtual environment...
 if not exist "%~dp0venv\Scripts\python.exe" (
-    echo       创建虚拟环境...
+    echo   Creating venv...
     python -m venv "%~dp0venv"
-    if errorlevel 1 (
-        echo [错误] 虚拟环境创建失败
-        pause
-        exit /b 1
-    )
 )
+echo   Installing dependencies...
+call "%~dp0venv\Scripts\pip.exe" install -r "%~dp0backend\requirements.txt" --quiet 2>nul
+echo   Dependencies ready.
 
-echo       安装/更新依赖包...
-"%~dp0venv\Scripts\pip.exe" install -r "%~dp0backend\requirements.txt" --quiet
+REM ========== 3. Check Ollama ==========
+echo [3/5] Checking Ollama...
+where ollama >nul 2>&1
 if errorlevel 1 (
-    echo [错误] 依赖安装失败，请检查网络连接
+    echo [ERROR] Ollama not found! Install from https://ollama.com/
     pause
     exit /b 1
 )
-echo       依赖已就绪
+echo   Ollama OK.
 
-REM ========== 3. 检查 Ollama ==========
-echo [3/5] 检查 Ollama 服务...
-ollama list >nul 2>&1
+REM ========== 4. Check model ==========
+echo [4/5] Checking model...
+ollama list 2>nul | findstr "deepseek-r1" >nul
 if errorlevel 1 (
-    echo [错误] Ollama 未运行，请先启动 Ollama
-    echo 下载地址: https://ollama.com/
-    pause
-    exit /b 1
-)
-echo       Ollama 服务正常
-
-REM ========== 4. 检查模型 ==========
-echo [4/5] 检查模型 deepseek-r1:1.5b...
-ollama list | findstr "deepseek-r1:1.5b" >nul
-if errorlevel 1 (
-    echo       模型未安装，正在下载（约1.1GB）...
+    echo   Downloading model, please wait...
     ollama pull deepseek-r1:1.5b
-    if errorlevel 1 (
-        echo [错误] 模型下载失败，请检查网络连接
-        pause
-        exit /b 1
-    )
 )
-echo       模型已就绪
+echo   Model ready.
 
-REM ========== 5. 启动服务 ==========
-echo [5/5] 启动后端服务...
-start "Little LLM Backend" cmd /k "\"%~dp0venv\Scripts\python.exe\" \"%~dp0backend\main.py\""
+REM ========== 5. Start backend ==========
+echo [5/5] Starting backend service...
+start "LittleLLM" cmd /k "title Little LLM Backend && %~dp0venv\Scripts\python.exe %~dp0backend\main.py"
 
-REM 等待后端启动
-echo       等待服务启动...
+echo   Waiting for service...
 timeout /t 3 /nobreak >nul
 
-REM 打开浏览器
-echo       打开前端界面...
+echo   Opening browser...
 start "" "%~dp0frontend\index.html"
 
 echo.
 echo ========================================
-echo   启动完成！
-echo   后端: http://localhost:9821
-echo   前端: 已在浏览器中打开
+echo   Done! Backend: http://localhost:9821
 echo ========================================
-echo.
-echo 关闭后端: 在 "Little LLM Backend" 窗口按 Ctrl+C
-echo 按任意键退出此窗口（后端会继续运行）
-pause >nul
+echo   Close: press Ctrl+C in backend window
+pause
