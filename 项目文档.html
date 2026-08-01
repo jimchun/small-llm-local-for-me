@@ -453,6 +453,10 @@
         <h2>十、版本历史</h2>
         <div class="timeline">
             <div class="timeline-item">
+                <span class="ver">v17.1-mvp</span><span class="date">2026-08-01</span>
+                <div class="desc">一键启动优化 —— start.bat 自动创建虚拟环境、安装依赖、检查 Ollama 和模型，用户只需双击即可运行</div>
+            </div>
+            <div class="timeline-item">
                 <span class="ver">v17-mvp</span><span class="date">2026-07-31</span>
                 <div class="desc">MVP 最小可用版本 —— 极简架构验证核心理念：强制引用机制 + 维基百科知识源 + Ollama 本地推理，Web 前端替代 PyQt6，端口 9821</div>
             </div>
@@ -480,7 +484,7 @@
         <h2>十一、路线图</h2>
         <table>
             <tr><th>阶段</th><th>目标</th><th>关键特性</th></tr>
-            <tr><td><strong>MVP v17 ✓</strong></td><td>核心理念验证</td><td>极简架构：强制引用 + 维基百科 + Ollama，Web前端一键启动</td></tr>
+            <tr><td><strong>MVP v17.1 ✓</strong></td><td>一键启动验证</td><td>start.bat 自动配置环境、创建虚拟环境、安装依赖，双击即运行</td></tr>
             <tr><td>v18 规划</td><td>多知识源扩展</td><td>接入本地文档、PDF解析、多源权重融合</td></tr>
             <tr><td>v19 规划</td><td>模型升级</td><td>支持切换更大参数模型（7B/14B）、量化推理优化</td></tr>
             <tr><td>v20 规划</td><td>用户画像与记忆</td><td>个性化推荐、动态记忆、经验沉淀</td></tr>
@@ -496,16 +500,22 @@
         <p>Python 3.11+、Ollama（本地推理引擎）、Windows 10/11 或 Linux/macOS</p>
 
         <h3>安装步骤</h3>
-        <div class="code-block"><span class="comment"># 1. 安装 Python 依赖</span>
-<span class="keyword">cd</span> backend
+        <div class="code-block"><span class="comment"># 方式一：一键启动（推荐）</span>
+<span class="keyword">双击 mvp\start.bat</span>
+<span class="comment"># 自动完成：创建虚拟环境 → 安装依赖 → 检查Ollama → 下载模型 → 启动服务</span>
+
+<span class="comment"># 方式二：手动安装</span>
+<span class="comment"># 1. 安装 Python 依赖</span>
+<span class="keyword">cd</span> mvp/backend
 <span class="keyword">pip</span> install -r requirements.txt
 
 <span class="comment"># 2. 安装 Ollama 并拉取模型</span>
 <span class="comment"># 下载地址: https://ollama.com/download</span>
 <span class="keyword">ollama</span> pull deepseek-r1:1.5b
 
-<span class="comment"># 3. Windows 一键启动</span>
-<span class="keyword">start.bat</span></div>
+<span class="comment"># 3. 启动后端</span>
+<span class="keyword">python</span> main.py
+<span class="comment"># → 浏览器打开 frontend/index.html</span></div>
 
         <h3>手动启动</h3>
         <div class="code-block"><span class="comment"># 终端 1 - 启动后端 API</span>
