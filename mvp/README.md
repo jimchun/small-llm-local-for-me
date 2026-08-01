@@ -1,65 +1,51 @@
-# Little LLM MVP
+# Little LLM MVP v17.2
 
 让每个人的电脑，都能运行自己的 AI。
 
 ## 快速开始
 
-### 环境要求
-- Windows 10/11
-- Python 3.11+
-- [Ollama](https://ollama.com/)
-
-### 一键启动
-
-双击运行 `start.bat`，自动完成：
-1. 检查 Python 环境
-2. 创建虚拟环境并安装依赖
-3. 检查 Ollama 服务
-4. 下载模型（首次运行约1.1GB）
-5. 启动后端并打开浏览器
-
-### 手动启动
-
-```bash
-# 1. 安装依赖
-cd backend
-pip install -r requirements.txt
-
-# 2. 启动后端
+```powershell
+# 双击运行 start.bat
+# 或手动启动：
+cd mvp/backend
 python main.py
-# → http://localhost:9821
-
-# 3. 打开前端
-# 浏览器打开 frontend/index.html
 ```
 
-## 核心特性
+访问 http://127.0.0.1:9821/
 
-- **强制引用**：每个回答必须标注来源，拒绝幻觉
-- **知识外包**：维基百科实时检索，小模型只做逻辑推理
-- **本地运行**：数据完全本地，隐私零泄露
-- **一键启动**：无需复杂配置，开箱即用
+## 功能特性
 
-## 技术栈
+### 双模式对话
+- **知识问答模式**：维基百科检索 + 强制引用，拒绝幻觉
+- **日常聊天模式**：自然对话，支持多轮上下文
 
-| 组件 | 技术 |
-|------|------|
-| 后端 | FastAPI (端口 9821) |
-| 推理 | Ollama + DeepSeek-R1 1.5B |
-| 知识源 | 维基百科 API |
-| 前端 | 单文件 HTML |
+### 对话历史
+- 自动保存所有对话内容
+- 支持多轮对话上下文
+- 清空对话功能
+
+### 智能识别
+- 自动识别用户意图
+- 短对话/问候语进入聊天模式
+- 知识性问题进入问答模式
+
+## API 接口
+
+- `POST /query` - 智能问答
+- `GET /history/{session_id}` - 获取对话历史
+- `DELETE /history/{session_id}` - 清空对话
 
 ## 项目结构
 
 ```
 mvp/
 ├── backend/
-│   ├── main.py          # FastAPI 后端
-│   └── requirements.txt # 依赖
+│   ├── main.py          # FastAPI 后端（双模式+上下文）
+│   └── requirements.txt
 ├── frontend/
-│   └── index.html       # Web 前端
-├── start.bat            # 一键启动
-└── README.md            # 本文件
+│   └── index.html       # 聊天界面
+├── data/                # 对话历史存储
+└── start.bat           # Windows 启动脚本
 ```
 
 ## 开源协议

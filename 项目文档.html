@@ -453,19 +453,25 @@
         <h2>版本历史</h2>
         <div class="timeline">
             <div class="timeline-item">
+                <span class="ver">v17.2 (2026-08-01)</span>
+                <div class="desc">
+                    <strong>双模式对话系统</strong> —— 
+                    添加对话历史保存，支持多轮上下文；
+                    实现知识问答模式（强制引用）和日常聊天模式自动切换；
+                    前端改为聊天界面，实时显示对话历史；
+                    智能识别用户意图，短对话/问候语进入聊天模式，知识性问题进入问答模式
+                </div>
+            </div>
+            <div class="timeline-item">
                 <span class="ver">v17.1 (2026-08-01)</span>
-                <ul>
-                    <li><strong>后端路由修复</strong>：添加根路径 "/" 服务前端页面，访问 http://127.0.0.1:9821/ 直接显示界面</li>
-                    <li><strong>前端 API 路径修复</strong>：使用相对路径调用 API，支持 file:// 和 http:// 两种协议</li>
-                    <li>简化启动流程，无需单独打开 HTML 文件</li>
-                </ul>
+                <div class="desc">
+                    <strong>后端路由修复</strong> —— 
+                    添加根路径 "/" 服务前端页面，访问 http://127.0.0.1:9821/ 直接显示界面；
+                    前端 API 路径修复，使用相对路径调用 API，支持 file:// 和 http:// 两种协议
+                </div>
             </div>
             <div class="timeline-item">
                 <span class="ver">v17 (2026-07-31)</span>
-                <div class="desc">一键启动优化 —— start.bat 自动创建虚拟环境、安装依赖、检查 Ollama 和模型，用户只需双击即可运行</div>
-            </div>
-            <div class="timeline-item">
-                <span class="ver">v17-mvp</span><span class="date">2026-07-31</span>
                 <div class="desc">MVP 最小可用版本 —— 极简架构验证核心理念：强制引用机制 + 维基百科知识源 + Ollama 本地推理，Web 前端替代 PyQt6，端口 9821</div>
             </div>
             <div class="timeline-item">

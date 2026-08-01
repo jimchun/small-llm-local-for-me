@@ -15,9 +15,98 @@
             color: #222;
             line-height: 1.6;
         }
-        h1 { font-size: 22px; margin-bottom: 6px; }
-        .subtitle { color: #666; font-size: 13px; margin-bottom: 30px; }
-        .input-area { display: flex; gap: 8px; margin-bottom: 24px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 6px;
+        }
+        h1 { font-size: 22px; }
+        .mode-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: none;
+        }
+        .mode-badge.chat { background: #e0f2fe; color: #0369a1; display: inline-block; }
+        .mode-badge.knowledge { background: #dcfce7; color: #166534; display: inline-block; }
+        .subtitle { color: #666; font-size: 13px; margin-bottom: 16px; }
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: #888;
+        }
+        .toolbar button {
+            padding: 4px 10px;
+            background: transparent;
+            color: #666;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .toolbar button:hover { background: #f0f0f0; }
+        .chat-area {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 16px;
+            min-height: 200px;
+            max-height: 500px;
+            overflow-y: auto;
+            background: #fafafa;
+            margin-bottom: 16px;
+        }
+        .chat-msg {
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            max-width: 90%;
+            word-break: break-word;
+        }
+        .chat-msg.user {
+            background: #e3f2fd;
+            margin-left: auto;
+            text-align: right;
+            border-bottom-right-radius: 2px;
+        }
+        .chat-msg.assistant {
+            background: #fff;
+            border: 1px solid #eee;
+            border-bottom-left-radius: 2px;
+        }
+        .chat-msg .role {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        .chat-msg .content {
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        .chat-msg .sources {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px dashed #ddd;
+            font-size: 12px;
+        }
+        .chat-msg .sources a {
+            color: #0066cc;
+            text-decoration: none;
+            display: block;
+            margin-top: 2px;
+        }
+        .chat-msg .sources a:hover { text-decoration: underline; }
+        .chat-msg.loading {
+            background: #f0f0f0;
+            color: #888;
+            font-style: italic;
+        }
+        .input-area {
+            display: flex;
+            gap: 8px;
+        }
         input[type="text"] {
             flex: 1;
             padding: 10px 14px;
@@ -27,7 +116,7 @@
             outline: none;
         }
         input[type="text"]:focus { border-color: #333; }
-        button {
+        button.send-btn {
             padding: 10px 20px;
             background: #222;
             color: #fff;
@@ -36,58 +125,35 @@
             font-size: 15px;
             cursor: pointer;
         }
-        button:hover { background: #444; }
-        button:disabled { background: #999; cursor: not-allowed; }
-        .result { margin-top: 20px; }
-        .answer-box {
-            background: #f8f8f8;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            padding: 16px;
-            white-space: pre-wrap;
-            word-break: break-word;
-            min-height: 60px;
+        button.send-btn:hover { background: #444; }
+        button.send-btn:disabled { background: #999; cursor: not-allowed; }
+        .empty-hint {
+            text-align: center;
+            color: #aaa;
+            padding: 40px 0;
+            font-size: 14px;
         }
-        .sources {
-            margin-top: 16px;
-            padding-top: 12px;
-            border-top: 1px solid #eee;
-        }
-        .sources h3 { font-size: 14px; margin-bottom: 8px; color: #555; }
-        .source-item {
-            font-size: 13px;
-            margin-bottom: 6px;
-            padding: 8px;
-            background: #fafafa;
-            border-left: 3px solid #ccc;
-        }
-        .source-item a { color: #0066cc; text-decoration: none; }
-        .source-item a:hover { text-decoration: underline; }
-        .loading { color: #666; font-style: italic; }
-        .error { color: #c00; }
-        .history { margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; }
-        .history-item { margin-bottom: 16px; }
-        .history-item .q { font-weight: bold; font-size: 14px; }
-        .history-item .a { font-size: 14px; color: #444; margin-top: 4px; }
     </style>
 </head>
 <body>
-    <h1>Little LLM</h1>
-    <p class="subtitle">本地运行 · 强制引用 · 拒绝幻觉</p>
+    <div class="header">
+        <h1>Little LLM</h1>
+        <span id="modeBadge" class="mode-badge"></span>
+    </div>
+    <p class="subtitle">本地运行 · 强制引用 · 拒绝幻觉 · 支持多轮对话</p>
+
+    <div class="toolbar">
+        <span id="sessionInfo">会话: default</span>
+        <button onclick="clearChat()">清空对话</button>
+    </div>
+
+    <div id="chatArea" class="chat-area">
+        <div class="empty-hint" id="emptyHint">输入问题开始对话，支持知识问答和日常聊天</div>
+    </div>
 
     <div class="input-area">
         <input type="text" id="question" placeholder="输入你的问题，例如：什么是量子计算？" autofocus>
-        <button id="askBtn" onclick="askQuestion()">提问</button>
-    </div>
-
-    <div id="result" class="result" style="display:none;">
-        <div id="answer" class="answer-box"></div>
-        <div id="sources" class="sources"></div>
-    </div>
-
-    <div id="history" class="history" style="display:none;">
-        <h3 style="font-size:14px; color:#555; margin-bottom:12px;">历史记录</h3>
-        <div id="historyList"></div>
+        <button id="askBtn" class="send-btn" onclick="askQuestion()">发送</button>
     </div>
 
     <script>
@@ -95,36 +161,83 @@
         const API_BASE = window.location.protocol === 'file:' 
             ? 'http://127.0.0.1:9821'
             : '';
+        
+        const SESSION_ID = 'default';
         const questionInput = document.getElementById('question');
         const askBtn = document.getElementById('askBtn');
-        const resultDiv = document.getElementById('result');
-        const answerDiv = document.getElementById('answer');
-        const sourcesDiv = document.getElementById('sources');
-        const historyDiv = document.getElementById('history');
-        const historyList = document.getElementById('historyList');
+        const chatArea = document.getElementById('chatArea');
+        const emptyHint = document.getElementById('emptyHint');
+        const modeBadge = document.getElementById('modeBadge');
 
         // 回车键提交
         questionInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') askQuestion();
         });
 
+        // 加载历史对话
+        window.addEventListener('load', loadHistory);
+
+        async function loadHistory() {
+            try {
+                const resp = await fetch(API_BASE + '/history/' + SESSION_ID);
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (data.history && data.history.length > 0) {
+                    emptyHint.style.display = 'none';
+                    data.history.forEach(item => {
+                        appendMessage('user', item.question, [], null);
+                        appendMessage('assistant', item.answer, item.sources || [], item.mode);
+                    });
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                }
+            } catch (e) {
+                console.error('加载历史失败:', e);
+            }
+        }
+
+        function appendMessage(role, content, sources, mode) {
+            emptyHint.style.display = 'none';
+            const div = document.createElement('div');
+            div.className = 'chat-msg ' + role;
+            
+            const roleLabel = role === 'user' ? '你' : 'AI';
+            let html = '<div class="role">' + roleLabel + '</div>';
+            html += '<div class="content">' + escapeHtml(content) + '</div>';
+            
+            if (sources && sources.length > 0) {
+                html += '<div class="sources"><strong>引用来源:</strong>';
+                sources.forEach(src => {
+                    html += '<a href="' + src.url + '" target="_blank">' + escapeHtml(src.title) + '</a>';
+                });
+                html += '</div>';
+            }
+            
+            div.innerHTML = html;
+            chatArea.appendChild(div);
+            chatArea.scrollTop = chatArea.scrollHeight;
+            return div;
+        }
+
         async function askQuestion() {
             const question = questionInput.value.trim();
             if (!question) return;
 
+            // 显示用户消息
+            appendMessage('user', question, [], null);
+
             // 显示加载状态
             askBtn.disabled = true;
-            askBtn.textContent = '思考中...';
-            resultDiv.style.display = 'block';
-            answerDiv.className = 'answer-box loading';
-            answerDiv.textContent = '正在检索维基百科并调用本地模型，请稍候...';
-            sourcesDiv.innerHTML = '';
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'chat-msg loading';
+            loadingDiv.textContent = 'AI 正在思考...';
+            chatArea.appendChild(loadingDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
 
             try {
                 const resp = await fetch(API_BASE + '/query', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question })
+                    body: JSON.stringify({ question, session_id: SESSION_ID })
                 });
 
                 if (!resp.ok) {
@@ -134,43 +247,43 @@
 
                 const data = await resp.json();
 
-                // 显示答案
-                answerDiv.className = 'answer-box';
-                answerDiv.textContent = data.answer || '（模型未返回有效回答）';
+                // 移除加载提示
+                loadingDiv.remove();
 
-                // 显示来源
-                if (data.sources && data.sources.length > 0) {
-                    let html = '<h3>📖 引用来源</h3>';
-                    data.sources.forEach(src => {
-                        html += `<div class="source-item">
-                            <a href="${src.url}" target="_blank">${src.title}</a>
-                            <div style="color:#888; font-size:12px; margin-top:2px;">${src.snippet}...</div>
-                        </div>`;
-                    });
-                    sourcesDiv.innerHTML = html;
+                // 显示 AI 回复
+                appendMessage('assistant', data.answer, data.sources, data.mode);
+
+                // 更新模式标记
+                if (data.mode === 'chat') {
+                    modeBadge.textContent = '聊天模式';
+                    modeBadge.className = 'mode-badge chat';
+                } else {
+                    modeBadge.textContent = '知识模式';
+                    modeBadge.className = 'mode-badge knowledge';
                 }
 
-                // 加入历史
-                addToHistory(question, data.answer);
-
             } catch (err) {
-                answerDiv.className = 'answer-box error';
-                answerDiv.textContent = '错误: ' + err.message;
+                loadingDiv.remove();
+                appendMessage('assistant', '错误: ' + err.message, [], null);
             } finally {
                 askBtn.disabled = false;
-                askBtn.textContent = '提问';
                 questionInput.value = '';
                 questionInput.focus();
             }
         }
 
-        function addToHistory(question, answer) {
-            historyDiv.style.display = 'block';
-            const item = document.createElement('div');
-            item.className = 'history-item';
-            item.innerHTML = `<div class="q">Q: ${escapeHtml(question)}</div>
-                              <div class="a">A: ${escapeHtml(answer.slice(0, 200))}${answer.length > 200 ? '...' : ''}</div>`;
-            historyList.insertBefore(item, historyList.firstChild);
+        async function clearChat() {
+            if (!confirm('确定要清空当前对话吗？')) return;
+            try {
+                await fetch(API_BASE + '/history/' + SESSION_ID, { method: 'DELETE' });
+                chatArea.innerHTML = '';
+                emptyHint.style.display = 'block';
+                chatArea.appendChild(emptyHint);
+                modeBadge.className = 'mode-badge';
+                modeBadge.textContent = '';
+            } catch (e) {
+                alert('清空失败: ' + e.message);
+            }
         }
 
         function escapeHtml(text) {
